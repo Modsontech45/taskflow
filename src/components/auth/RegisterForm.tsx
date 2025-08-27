@@ -98,10 +98,12 @@ export function RegisterForm() {
         <CardContent className="p-8">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
-              <CheckSquare className="w-10 h-10 text-blue-600" />
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                <CheckSquare className="w-6 h-6 text-white" />
+              </div>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Create account</h1>
-            <p className="text-gray-600 mt-2">Join TaskFlow and start organizing your tasks</p>
+            <h1 className="text-2xl font-bold text-gray-900">Join TaskNest</h1>
+            <p className="text-gray-600 mt-2">Create your cozy space for tasks and celebrations</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

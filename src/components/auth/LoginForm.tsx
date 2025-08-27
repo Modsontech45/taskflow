@@ -60,10 +60,12 @@ export function LoginForm() {
         <CardContent className="p-8">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
-              <CheckSquare className="w-10 h-10 text-blue-600" />
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                <CheckSquare className="w-6 h-6 text-white" />
+              </div>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-            <p className="text-gray-600 mt-2">Sign in to your TaskFlow account</p>
+            <h1 className="text-2xl font-bold text-gray-900">Welcome back to TaskNest</h1>
+            <p className="text-gray-600 mt-2">Sign in to your cozy task management space</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
