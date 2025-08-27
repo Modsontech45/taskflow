@@ -37,6 +37,17 @@ BOARD_TASKS: (boardId: string) => `/boards/${boardId}/tasks`,
   // Members (new endpoints under /members)
   MEMBERS: (boardId: string) => `/members/${boardId}`,            // GET all members, POST add member
   MEMBER_DETAIL: (boardId: string, userId: string) => `/members/${boardId}/${userId}`, // PUT update role, DELETE remove
+
+  // Notifications
+  NOTIFICATIONS: '/notifications',
+  NOTIFICATION_READ: (notificationId: string) => `/notifications/${notificationId}/read`,
+
+  // Subscriptions
+  SUBSCRIPTIONS: (userId: string) => `/subscriptions/${userId}`,
+  SUBSCRIPTIONS_CREATE: '/subscriptions',
+
+  // Profile
+  PROFILE: (userId: string) => `/profile/${userId}`,
 } as const;
 
 

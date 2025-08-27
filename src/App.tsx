@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { ToastProvider } from './components/ui/Toast';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Navbar } from './components/layout/Navbar';
@@ -12,6 +13,10 @@ import { ResetPassword } from './components/auth/ResetPassword';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { BoardList } from './components/board/BoardList';
 import { BoardDetail } from './components/board/BoardDetail';
+import { NotificationsPage } from './components/notifications/NotificationsPage';
+import { SubscriptionPage } from './components/subscription/SubscriptionPage';
+import { ProfilePage } from './components/profile/ProfilePage';
+import { BlogPage } from './components/blog/BlogPage';
 
 function AppContent() {
   const { user } = useAuth();
@@ -77,6 +82,37 @@ function AppContent() {
           }
         />
         <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Navbar />
+              <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/subscription"
+          element={
+            <ProtectedRoute>
+              <Navbar />
+              <SubscriptionPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Navbar />
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/blog"
+          element={<BlogPage />}
+        />
+        <Route
           path="/"
           element={
             <Navigate to={user ? "/dashboard" : "/login"} replace />
@@ -90,11 +126,13 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <ToastProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </ToastProvider>
+      <NotificationProvider>
+        <ToastProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </ToastProvider>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

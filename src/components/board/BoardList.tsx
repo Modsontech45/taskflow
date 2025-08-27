@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../../services/api';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { useToast } from '../ui/Toast';
 import { Board } from '../../types/board';
 import { Card, CardContent } from '../ui/Card';
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 
 export function BoardList() {
+  const { createNotification } = useNotifications();
   const { showToast } = useToast();
   const [boards, setBoards] = useState<Board[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +57,14 @@ export function BoardList() {
       setNewBoardName('');
       setCreateModalOpen(false);
       showToast('success', 'Board created', 'Your new board has been created successfully.');
+     
+     // Create notification for board creation
+     await createNotification(
+       'BOARD_CREATED',
+       'New board created',
+       `Board "${newBoard.name}" was created successfully`,
+       { boardId: newBoard.id }
+     );
     } catch (error: any) {
       console.error('Error creating board:', error);
       showToast('error', 'Failed to create board', error.message || 'Please try again.');

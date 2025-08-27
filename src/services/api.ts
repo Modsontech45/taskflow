@@ -187,6 +187,55 @@ async deleteTask(boardId: string, taskId: string) {
   return this.request(API_ENDPOINTS.TASK_DETAIL(boardId, taskId), { method: 'DELETE' });
 }
 
+  // ------------------- Notifications -------------------
+  async getNotifications() {
+    return this.request(API_ENDPOINTS.NOTIFICATIONS);
+  }
+
+  async createNotification(data: { type: string; title: string; message: string; metadata?: any }) {
+    return this.request(API_ENDPOINTS.NOTIFICATIONS, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async markNotificationAsRead(notificationId: string) {
+    return this.request(API_ENDPOINTS.NOTIFICATION_READ(notificationId), {
+      method: 'PATCH',
+    });
+  }
+
+  // ------------------- Subscriptions -------------------
+  async getSubscription(userId: string) {
+    return this.request(API_ENDPOINTS.SUBSCRIPTIONS(userId));
+  }
+
+  async createSubscription(data: { plan: string }) {
+    return this.request(API_ENDPOINTS.SUBSCRIPTIONS_CREATE, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateSubscription(userId: string, data: { memberCount?: number; status?: string }) {
+    return this.request(API_ENDPOINTS.SUBSCRIPTIONS(userId), {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // ------------------- Profile -------------------
+  async getProfile(userId: string) {
+    return this.request(API_ENDPOINTS.PROFILE(userId));
+  }
+
+  async updateProfile(userId: string, data: any) {
+    return this.request(API_ENDPOINTS.PROFILE(userId), {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
   // async updateTask(boardId: string, taskId: string, data: any) {
   //   this.log('info', 'Updating task', { boardId, taskId, data });
   //   return this.request(API_ENDPOINTS.TASK_DETAIL(boardId, taskId), { method: 'PUT', body: JSON.stringify(data) });

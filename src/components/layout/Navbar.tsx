@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { Button } from '../ui/Button';
 import { 
   LayoutDashboard, 
@@ -9,17 +10,25 @@ import {
   LogOut, 
   Menu, 
   X,
-  CheckSquare 
+  CheckSquare,
+  Bell,
+  CreditCard,
+  FileText
 } from 'lucide-react';
 
 export function Navbar() {
   const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Boards', href: '/boards', icon: Folder },
+    { name: 'Notifications', href: '/notifications', icon: Bell, badge: unreadCount },
+    { name: 'Subscription', href: '/subscription', icon: CreditCard },
+    { name: 'Profile', href: '/profile', icon: User },
+    { name: 'Blog', href: '/blog', icon: FileText },
   ];
 
   const isActiveLink = (href: string) => {
@@ -54,6 +63,11 @@ export function Navbar() {
                 >
                   <Icon className="w-4 h-4" />
                   <span>{item.name}</span>
+                  {item.badge && item.badge > 0 && (
+                    <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 min-w-[1.25rem] h-5 flex items-center justify-center">
+                      {item.badge > 99 ? '99+' : item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -115,6 +129,11 @@ export function Navbar() {
                   >
                     <Icon className="w-5 h-5" />
                     <span>{item.name}</span>
+                    {item.badge && item.badge > 0 && (
+                      <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 min-w-[1.25rem] h-5 flex items-center justify-center ml-auto">
+                        {item.badge > 99 ? '99+' : item.badge}
+                      </span>
+                    )}
                   </Link>
                 );
               })}

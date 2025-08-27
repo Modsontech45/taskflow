@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { apiClient } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNotifications } from "../../contexts/NotificationContext";
 import { useToast } from "../ui/Toast";
 import { Board, BoardMember } from "../../types/board";
 import { Button } from "../ui/Button";
@@ -28,6 +29,7 @@ export function BoardMemberManagement({
   onMembersUpdate,
 }: BoardMemberManagementProps) {
   const { user } = useAuth();
+  const { createNotification } = useNotifications();
   const { showToast } = useToast();
   const [addMemberModalOpen, setAddMemberModalOpen] = useState(false);
   const [newMemberEmail, setNewMemberEmail] = useState("");
@@ -101,6 +103,14 @@ export function BoardMemberManagement({
         "Member added",
         "The user has been added to the board."
       );
+    
+    // Create notification for member invitation
+    await createNotification(
+      'MEMBER_INVITED',
+      'New member invited',
+      `${memberData.user.firstName} ${memberData.user.lastName} was invited to board "${board.name}"`,
+      { boardId: board.id, memberId: memberData.userId }
+    );
     } catch (error: any) {
       console.error("Error adding member:", error);
       showToast(

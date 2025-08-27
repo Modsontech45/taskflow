@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiClient } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNotifications } from "../../contexts/NotificationContext";
 import { useToast } from "../ui/Toast";
 import {
   Board,
@@ -32,6 +33,7 @@ import { formatISO, addDays, format, parseISO } from "date-fns";
 export function BoardDetail() {
   const { boardId } = useParams<{ boardId: string }>();
   const { user } = useAuth();
+  const { createNotification } = useNotifications();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -176,6 +178,14 @@ const handleTaskSubmit = async (e: React.FormEvent) => {
       const newTask = await apiClient.createTask(boardId, createData);
       setTasks((prev) => [newTask, ...prev]);
       showToast("success", "Task created", "The task has been created successfully.");
+      
+      // Create notification for task creation
+      await createNotification(
+        'TASK_CREATED',
+        'New task created',
+        `Task "${newTask.title}" was created in board "${board?.name}"`,
+        { boardId, taskId: newTask.id }
+      );
     }
 
     setTaskModalOpen(false);
