@@ -108,15 +108,10 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/landing"
-          element={<LandingPage />}
-        />
+        <Route path="/landing" element={<LandingPage />} />
         <Route
           path="/"
-          element={
-            <Navigate to={user ? "/dashboard" : "/landing"} replace />
-          }
+          element={<LandingPage />}
         />
       </Routes>
     </div>
