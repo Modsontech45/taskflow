@@ -28,7 +28,7 @@ export function Navbar() {
     { name: 'Notifications', href: '/notifications', icon: Bell, badge: unreadCount },
     { name: 'Subscription', href: '/subscription', icon: CreditCard },
     { name: 'Profile', href: '/profile', icon: User },
-    { name: 'About', href: '/landing', icon: FileText },
+    { name: 'About', href: '/', icon: FileText },
   ];
 
   const isActiveLink = (href: string) => {

@@ -216,6 +216,14 @@ export function RegisterForm() {
                 Sign in
               </Link>
             </p>
+            <p className="text-sm text-gray-600 mt-2">
+              <Link
+                to="/"
+                className="text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                ← Back to home
+              </Link>
+            </p>
           </div>
         </CardContent>
       </Card>

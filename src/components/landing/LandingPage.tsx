@@ -95,7 +95,7 @@ export function LandingPage() {
               <Link to="/login">
                 <Button variant="ghost">Sign In</Button>
               </Link>
-              <Link to="/register">
+              <Link to="/login">
                 <Button>Get Started</Button>
               </Link>
             </div>
@@ -123,7 +123,7 @@ export function LandingPage() {
               A cozy place where your daily tasks live and grow.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/register">
+              <Link to="/login">
                 <Button size="lg" className="px-8 py-4 text-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
                   Start Free
                   <ArrowRight className="w-5 h-5 ml-2" />
@@ -325,7 +325,7 @@ export function LandingPage() {
           <p className="text-xl text-purple-100 mb-10 max-w-2xl mx-auto">
             Start organizing your tasks and sharing your wins today. Your loved ones are waiting to celebrate with you.
           </p>
-          <Link to="/register">
+          <Link to="/login">
             <Button size="lg" className="px-12 py-4 text-lg bg-white text-purple-600 hover:bg-gray-100 shadow-xl">
               Get Started Today – It's Free
               <ArrowRight className="w-5 h-5 ml-2" />
@@ -356,17 +356,17 @@ export function LandingPage() {
             <div>
               <h3 className="font-semibold mb-4">Product</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
+                <li><Link to="/login" className="hover:text-white transition-colors">Features</Link></li>
+                <li><Link to="/login" className="hover:text-white transition-colors">How It Works</Link></li>
+                <li><Link to="/login" className="hover:text-white transition-colors">Pricing</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#about" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#contact" className="hover:text-white transition-colors">Contact</a></li>
-                <li><a href="#support" className="hover:text-white transition-colors">Support</a></li>
+                <li><Link to="/login" className="hover:text-white transition-colors">About</Link></li>
+                <li><Link to="/login" className="hover:text-white transition-colors">Contact</Link></li>
+                <li><Link to="/login" className="hover:text-white transition-colors">Support</Link></li>
               </ul>
             </div>
           </div>
