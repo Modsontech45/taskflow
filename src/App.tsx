@@ -16,7 +16,7 @@ import { BoardDetail } from './components/board/BoardDetail';
 import { NotificationsPage } from './components/notifications/NotificationsPage';
 import { SubscriptionPage } from './components/subscription/SubscriptionPage';
 import { ProfilePage } from './components/profile/ProfilePage';
-import { BlogPage } from './components/blog/BlogPage';
+import { LandingPage } from './components/landing/LandingPage';
 
 function AppContent() {
   const { user } = useAuth();
@@ -109,13 +109,13 @@ function AppContent() {
           }
         />
         <Route
-          path="/blog"
-          element={<BlogPage />}
+          path="/landing"
+          element={<LandingPage />}
         />
         <Route
           path="/"
           element={
-            <Navigate to={user ? "/dashboard" : "/login"} replace />
+            <Navigate to={user ? "/dashboard" : "/landing"} replace />
           }
         />
       </Routes>

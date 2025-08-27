@@ -53,19 +53,19 @@ export function BlogPage() {
     {
       name: 'Sarah Johnson',
       role: 'Project Manager',
-      content: 'TaskFlow has revolutionized how our team manages projects. The collaboration features are outstanding.',
+      content: 'TaskNest keeps me focused every day and sharing progress with my partner makes it fun.',
       rating: 5,
     },
     {
       name: 'Mike Chen',
       role: 'Startup Founder',
-      content: 'Simple, elegant, and powerful. TaskFlow helps us stay organized without the complexity of other tools.',
+      content: 'Finally, a productivity app that feels personal, not corporate.',
       rating: 5,
     },
     {
       name: 'Emily Rodriguez',
       role: 'Freelance Designer',
-      content: 'Perfect for managing client projects. The notification system keeps me on top of all my deadlines.',
+      content: 'I love seeing my family celebrate my daily wins. It\'s so motivating!',
       rating: 5,
     },
   ];
@@ -77,14 +77,15 @@ export function BlogPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <div className="flex items-center justify-center mb-6">
-              <CheckSquare className="w-16 h-16 text-blue-600" />
+              <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center">
+                <CheckSquare className="w-10 h-10 text-white" />
+              </div>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              Welcome to <span className="text-blue-600">TaskFlow</span>
+              Welcome to <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">TaskNest</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              The modern task management platform that helps individuals and teams stay organized, 
-              collaborate effectively, and achieve their goals with ease.
+              A cozy place where your daily tasks live and grow. Share your progress and celebrate with the people you love.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/register">
@@ -107,10 +108,10 @@ export function BlogPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Everything you need to stay productive
+            Everything you need to stay organized
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            TaskFlow combines powerful features with an intuitive interface to help you manage tasks and collaborate with your team.
+            TaskNest combines powerful organization with the joy of sharing your progress with loved ones.
           </p>
         </div>
 
@@ -141,7 +142,7 @@ export function BlogPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              How TaskFlow Works
+              How TaskNest Works
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Get started in minutes with our simple three-step process
@@ -184,10 +185,10 @@ export function BlogPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            What our users say
+            Why People Love TaskNest
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Join thousands of satisfied users who have transformed their productivity with TaskFlow
+            Join thousands who have transformed their daily productivity into a shared celebration
           </p>
         </div>
 
@@ -306,14 +307,14 @@ export function BlogPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Ready to boost your productivity?
+              Make Every Day Count
             </h2>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              Join thousands of users who have already transformed their workflow with TaskFlow.
+              Start organizing your tasks and sharing your wins today. Your loved ones are waiting to celebrate with you.
             </p>
             <Link to="/register">
               <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 px-8">
-                Start Free Today
+                Get Started Today – It's Free
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
@@ -327,11 +328,13 @@ export function BlogPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center space-x-2 mb-4">
-                <CheckSquare className="w-8 h-8 text-blue-400" />
-                <span className="font-bold text-xl">TaskFlow</span>
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                  <CheckSquare className="w-5 h-5 text-white" />
+                </div>
+                <span className="font-bold text-xl">TaskNest</span>
               </div>
               <p className="text-gray-400 mb-4 max-w-md">
-                The modern task management platform that helps you stay organized and productive.
+                A cozy place where your daily tasks live and grow. Share your progress and celebrate with the people you love.
               </p>
               <div className="flex items-center space-x-4">
                 <Globe className="w-5 h-5 text-gray-400" />
@@ -356,7 +359,7 @@ export function BlogPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 TaskFlow. All rights reserved.</p>
+            <p>&copy; 2024 TaskNest. All rights reserved. Made for people who love to share their wins.</p>
           </div>
         </div>
       </footer>
