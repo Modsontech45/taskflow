@@ -86,7 +86,7 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <span className="font-bold text-xl text-gray-900">TaskNest</span>
@@ -108,13 +108,13 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
             <div className="flex items-center justify-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center shadow-lg">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
             </div>
             <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6">
               Organize Your Day,<br />
-              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-black to-green-600 bg-clip-text text-transparent">
                 Share the Wins
               </span>
             </h1>
@@ -124,7 +124,7 @@ export function LandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/login">
-                <Button size="lg" className="px-8 py-4 text-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                <Button size="lg" className="px-8 py-4 text-lg bg-gradient-to-r from-black to-pink-600 hover:from-purple-700 hover:to-pink-700">
                   Start Free
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
@@ -157,7 +157,7 @@ export function LandingPage() {
                 <Card key={index} className="text-center hover:shadow-xl transition-all duration-300 border-0 shadow-lg">
                   <CardContent className="p-8">
                     <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                      <Icon className="w-8 h-8 text-purple-600" />
+                      <Icon className="w-8 h-8 text-black" />
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-4">
                       {feature.title}
@@ -191,7 +191,7 @@ export function LandingPage() {
               return (
                 <div key={index} className="text-center">
                   <div className="relative mb-8">
-                    <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto shadow-lg">
+                    <div className="w-20 h-20 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto shadow-lg">
                       {step.number}
                     </div>
                     <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md">
@@ -317,7 +317,7 @@ export function LandingPage() {
       </div>
 
       {/* Final CTA Section */}
-      <div className="py-20 bg-gradient-to-r from-purple-600 to-pink-600">
+      <div className="py-20 bg-gradient-to-r from-black to-gray-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
             Make Every Day Count

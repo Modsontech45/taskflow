@@ -98,7 +98,7 @@ export function RegisterForm() {
         <CardContent className="p-8">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center">
                 <CheckSquare className="w-6 h-6 text-white" />
               </div>
             </div>

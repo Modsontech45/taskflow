@@ -17,7 +17,7 @@ import {
 import { format, parseISO } from 'date-fns';
 
 const PRICING: SubscriptionPricing = {
-  basicPrice: 2.00,
+  basicPrice: 1.00,
   memberPrice: 0.50,
 };
 
