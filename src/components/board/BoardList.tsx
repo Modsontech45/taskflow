@@ -3,20 +3,13 @@ import { Link } from 'react-router-dom';
 import { apiClient } from '../../services/api';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useToast } from '../ui/Toast';
-import { Board } from '../../types/board';
+import { Board, Task } from '../../types/board';
 import { Card, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
 import { 
-  Plus, 
-  Users, 
-  Calendar, 
-  CheckCircle2, 
-  Folder,
-  MoreHorizontal,
-  Edit,
-  Trash2 
+  Plus, Users, Calendar, CheckCircle2, Folder, Trash2 
 } from 'lucide-react';
 
 export function BoardList() {
@@ -35,11 +28,27 @@ export function BoardList() {
   }, []);
 
   const loadBoards = async () => {
+    setLoading(true);
     try {
-      const data = await apiClient.getBoards();
-      setBoards(data);
-    } catch (error) {
-      console.error('Error loading boards:', error);
+      const data: Board[] = await apiClient.getBoards();
+
+      // Fetch tasks for each board
+      const boardsWithTasks = await Promise.all(
+        data.map(async (board) => {
+          try {
+            const tasks: Task[] = await apiClient.getBoardTasks(board.id);
+            return { ...board, tasks };
+          } catch (err) {
+            console.warn(`⚠️ Failed to load tasks for board ${board.id}`, err);
+            return { ...board, tasks: [] };
+          }
+        })
+      );
+
+      console.log('Boards with tasks:', boardsWithTasks);
+      setBoards(boardsWithTasks);
+    } catch (err) {
+      console.error('Error loading boards:', err);
       showToast('error', 'Failed to load boards', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
@@ -57,14 +66,13 @@ export function BoardList() {
       setNewBoardName('');
       setCreateModalOpen(false);
       showToast('success', 'Board created', 'Your new board has been created successfully.');
-     
-     // Create notification for board creation
-     await createNotification(
-       'BOARD_CREATED',
-       'New board created',
-       `Board "${newBoard.name}" was created successfully`,
-       { boardId: newBoard.id }
-     );
+
+      await createNotification(
+        'BOARD_CREATED',
+        'New board created',
+        `Board "${newBoard.name}" was created successfully`,
+        { boardId: newBoard.id }
+      );
     } catch (error: any) {
       console.error('Error creating board:', error);
       showToast('error', 'Failed to create board', error.message || 'Please try again.');
@@ -109,8 +117,7 @@ export function BoardList() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-900">My Boards</h1>
         <Button onClick={() => setCreateModalOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Board
+          <Plus className="w-4 h-4 mr-2" /> New Board
         </Button>
       </div>
 
@@ -123,136 +130,84 @@ export function BoardList() {
             Create your first board to start organizing your tasks and collaborating with your team.
           </p>
           <Button onClick={() => setCreateModalOpen(true)} size="lg">
-            <Plus className="w-5 h-5 mr-2" />
-            Create your first board
+            <Plus className="w-5 h-5 mr-2" /> Create your first board
           </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {boards.map((board) => (
-            <Card key={board.id} hover className="group">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <Link
-                      to={`/boards/${board.id}`}
-                      className="block hover:text-blue-600 transition-colors"
-                    >
-                      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600">
-                        {board.name}
-                      </h3>
+          {boards.map((board) => {
+            const completedTasks = board.tasks?.filter(t => t.isDone || t.status === 'expired').length || 0;
+            const pendingTasks = board.tasks?.filter(t => !t.isDone && t.status === 'pending').length || 0;
+            return (
+              <Card key={board.id} hover className="group">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <Link to={`/boards/${board.id}`} className="block hover:text-blue-600 transition-colors">
+                        <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600">{board.name}</h3>
+                      </Link>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Created {new Date(board.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => { setDeletingBoard(board); setDeleteModalOpen(true); }}
+                        className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-50 transition-colors"
+                        title="Delete board"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center text-sm text-gray-600">
+                      <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" />
+                      <span>{completedTasks} completed tasks</span>
+                    </div>
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Calendar className="w-4 h-4 mr-2 text-blue-500" />
+                      <span>{pendingTasks} pending tasks</span>
+                    </div>
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Users className="w-4 h-4 mr-2 text-purple-500" />
+                      <span>{board.members?.length || 1} members</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-gray-100">
+                    <Link to={`/boards/${board.id}`} className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors">
+                      View board →
                     </Link>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Created {new Date(board.createdAt).toLocaleDateString()}
-                    </p>
                   </div>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => {
-                        setDeletingBoard(board);
-                        setDeleteModalOpen(true);
-                      }}
-                      className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-50 transition-colors"
-                      title="Delete board"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" />
-                    <span>{board.tasks?.filter(t => t.isDone).length || 0} completed tasks</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Calendar className="w-4 h-4 mr-2 text-blue-500" />
-                    <span>{board.tasks?.filter(t => !t.isDone).length || 0} pending tasks</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Users className="w-4 h-4 mr-2 text-purple-500" />
-                    <span>{board.members?.length || 1} members</span>
-                  </div>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-gray-100">
-                  <Link
-                    to={`/boards/${board.id}`}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
-                  >
-                    View board →
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      {/* Create Board Modal */}
-      <Modal
-        isOpen={createModalOpen}
-        onClose={() => {
-          setCreateModalOpen(false);
-          setNewBoardName('');
-        }}
-        title="Create New Board"
-      >
+      {/* Modals */}
+      <Modal isOpen={createModalOpen} onClose={() => { setCreateModalOpen(false); setNewBoardName(''); }} title="Create New Board">
         <form onSubmit={handleCreateBoard} className="space-y-6">
-          <Input
-            label="Board name"
-            value={newBoardName}
-            onChange={(e) => setNewBoardName(e.target.value)}
-            placeholder="Enter board name..."
-            required
-            autoFocus
-          />
+          <Input label="Board name" value={newBoardName} onChange={(e) => setNewBoardName(e.target.value)} placeholder="Enter board name..." required autoFocus />
           <div className="flex justify-end space-x-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setCreateModalOpen(false);
-                setNewBoardName('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" loading={creating}>
-              Create Board
-            </Button>
+            <Button type="button" variant="outline" onClick={() => { setCreateModalOpen(false); setNewBoardName(''); }}>Cancel</Button>
+            <Button type="submit" loading={creating}>Create Board</Button>
           </div>
         </form>
       </Modal>
 
-      {/* Delete Board Modal */}
-      <Modal
-        isOpen={deleteModalOpen}
-        onClose={() => {
-          setDeleteModalOpen(false);
-          setDeletingBoard(null);
-        }}
-        title="Delete Board"
-      >
+      <Modal isOpen={deleteModalOpen} onClose={() => { setDeleteModalOpen(false); setDeletingBoard(null); }} title="Delete Board">
         <div className="space-y-4">
           <p className="text-gray-700">
             Are you sure you want to delete <strong>"{deletingBoard?.name}"</strong>? 
             This action cannot be undone and will permanently delete all tasks and data in this board.
           </p>
           <div className="flex justify-end space-x-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setDeleteModalOpen(false);
-                setDeletingBoard(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button variant="danger" onClick={handleDeleteBoard}>
-              Delete Board
-            </Button>
+            <Button type="button" variant="outline" onClick={() => { setDeleteModalOpen(false); setDeletingBoard(null); }}>Cancel</Button>
+            <Button variant="danger" onClick={handleDeleteBoard}>Delete Board</Button>
           </div>
         </div>
       </Modal>

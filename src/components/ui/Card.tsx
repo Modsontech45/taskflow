@@ -11,7 +11,7 @@ export function Card({ children, className, hover = false }: CardProps) {
   return (
     <div
       className={clsx(
-        'bg-white rounded-2xl shadow-sm border border-gray-300',
+        'bg-gray-300 rounded-2xl shadow-sm border border-gray-400',
         hover && 'hover:shadow-md transition-shadow duration-200',
         className
       )}

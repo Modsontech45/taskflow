@@ -20,7 +20,7 @@ export const API_ENDPOINTS = {
   AUTH_LOGIN: '/auth/login',
   AUTH_REGISTER: '/auth/register',
   AUTH_VERIFY_EMAIL: '/auth/verify-email',
-  AUTH_REQUEST_PASSWORD_RESET: '/auth/request-password-reset',
+  AUTH_REQUEST_PASSWORD_RESET: '/auth/forgot-password',
   AUTH_RESET_PASSWORD: '/auth/reset-password',
 
 // Boards

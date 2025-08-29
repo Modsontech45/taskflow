@@ -26,7 +26,9 @@ import {
   Edit,
   Trash2,
   ArrowLeft,
-  Settings,
+  
+    Award
+  
 } from "lucide-react";
 import { formatISO, addDays, format, parseISO } from "date-fns";
 
@@ -134,110 +136,137 @@ export function BoardDetail() {
     return errors;
   };
 
-const handleTaskSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleTaskSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const errors = validateTaskForm();
-  if (Object.keys(errors).length > 0) {
-    setTaskFormErrors(errors);
-    return;
-  }
-
-  setSubmittingTask(true);
-
-  try {
-    const startAtISO = new Date(taskFormData.startAt).toISOString();
-    const endAtISO = new Date(taskFormData.endAt).toISOString();
-
-    if (!boardId) throw new Error("Board ID is missing");
-
-    if (editingTask) {
-      const updateData: UpdateTaskRequest = {
-        title: taskFormData.title.trim(),
-        notes: taskFormData.notes.trim() || undefined,
-        startAt: startAtISO,
-        endAt: endAtISO,
-      };
-
-      // Pass both boardId and taskId correctly
-      const updatedTask = await apiClient.updateTask(boardId, editingTask.id, updateData);
-
-      setTasks((prev) =>
-        prev.map((t) => (t.id === editingTask.id ? { ...t, ...updatedTask } : t))
-      );
-
-      showToast("success", "Task updated", "The task has been updated successfully.");
-    } else {
-      const createData: CreateTaskRequest = {
-        title: taskFormData.title.trim(),
-        notes: taskFormData.notes.trim() || undefined,
-        startAt: startAtISO,
-        endAt: endAtISO,
-      };
-
-      const newTask = await apiClient.createTask(boardId, createData);
-      setTasks((prev) => [newTask, ...prev]);
-      showToast("success", "Task created", "The task has been created successfully.");
-      
-      // Create notification for task creation
-      await createNotification(
-        'TASK_CREATED',
-        'New task created',
-        `Task "${newTask.title}" was created in board "${board?.name}"`,
-        { boardId, taskId: newTask.id }
-      );
+    const errors = validateTaskForm();
+    if (Object.keys(errors).length > 0) {
+      setTaskFormErrors(errors);
+      return;
     }
 
-    setTaskModalOpen(false);
-    setEditingTask(null);
-  } catch (error: any) {
-    console.error("Error saving task:", error);
-    showToast("error", "Failed to save task", error.message || "Please try again.");
-  } finally {
-    setSubmittingTask(false);
-  }
-};
+    setSubmittingTask(true);
 
-const handleToggleTask = async (task: Task) => {
-  if (!boardId) {
-    console.error("No boardId found for toggling task");
-    return;
-  }
+    try {
+      const startAtISO = new Date(taskFormData.startAt).toISOString();
+      const endAtISO = new Date(taskFormData.endAt).toISOString();
 
-  try {
-    const updatedTask = await apiClient.toggleTask(boardId, task.id);
+      if (!boardId) throw new Error("Board ID is missing");
 
-    setTasks((prev) =>
-      prev.map((t) => (t.id === task.id ? { ...t, isDone: !t.isDone } : t))
-    );
+      if (editingTask) {
+        const updateData: UpdateTaskRequest = {
+          title: taskFormData.title.trim(),
+          notes: taskFormData.notes.trim() || undefined,
+          startAt: startAtISO,
+          endAt: endAtISO,
+        };
 
-    showToast(
-      "success",
-      task.isDone ? "Task reopened" : "Task completed",
-      ""
-    );
-  } catch (error: any) {
-    console.error("Error toggling task:", error);
-    showToast(
-      "error",
-      "Failed to update task",
-      error.message || "Please try again."
-    );
-  }
-};
+        // Pass both boardId and taskId correctly
+        const updatedTask = await apiClient.updateTask(
+          boardId,
+          editingTask.id,
+          updateData
+        );
 
- const handleDeleteTask = async (task: Task) => {
-  if (!window.confirm(`Are you sure you want to delete "${task.title}"?`)) return;
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === editingTask.id ? { ...t, ...updatedTask } : t
+          )
+        );
 
-  try {
-    await apiClient.deleteTask(boardId!, task.id); // pass boardId here
-    setTasks((prev) => prev.filter((t) => t.id !== task.id));
-    showToast("success", "Task deleted", "The task has been deleted successfully.");
-  } catch (error: any) {
-    console.error("Error deleting task:", error);
-    showToast("error", "Failed to delete task", error.message || "Please try again.");
-  }
-};
+        showToast(
+          "success",
+          "Task updated",
+          "The task has been updated successfully."
+        );
+      } else {
+        const createData: CreateTaskRequest = {
+          title: taskFormData.title.trim(),
+          notes: taskFormData.notes.trim() || undefined,
+          startAt: startAtISO,
+          endAt: endAtISO,
+        };
+
+        const newTask = await apiClient.createTask(boardId, createData);
+        setTasks((prev) => [newTask, ...prev]);
+        showToast(
+          "success",
+          "Task created",
+          "The task has been created successfully."
+        );
+
+        // Create notification for task creation
+        await createNotification(
+          "TASK_CREATED",
+          "New task created",
+          `Task "${newTask.title}" was created in board "${board?.name}"`,
+          { boardId, taskId: newTask.id }
+        );
+      }
+
+      setTaskModalOpen(false);
+      setEditingTask(null);
+    } catch (error: any) {
+      console.error("Error saving task:", error);
+      showToast(
+        "error",
+        "Failed to save task",
+        error.message || "Please try again."
+      );
+    } finally {
+      setSubmittingTask(false);
+    }
+  };
+
+  const handleToggleTask = async (task: Task) => {
+    if (!boardId) {
+      console.error("No boardId found for toggling task");
+      return;
+    }
+
+    try {
+      const updatedTask = await apiClient.toggleTask(boardId, task.id);
+
+      setTasks((prev) =>
+        prev.map((t) => (t.id === task.id ? { ...t, isDone: !t.isDone } : t))
+      );
+
+      showToast(
+        "success",
+        task.isDone ? "Task reopened" : "Task completed",
+        ""
+      );
+    } catch (error: any) {
+      console.error("Error toggling task:", error);
+      showToast(
+        "error",
+        "Failed to update task",
+        error.message || "Please try again."
+      );
+    }
+  };
+
+  const handleDeleteTask = async (task: Task) => {
+    if (!window.confirm(`Are you sure you want to delete "${task.title}"?`))
+      return;
+
+    try {
+      await apiClient.deleteTask(boardId!, task.id); // pass boardId here
+      setTasks((prev) => prev.filter((t) => t.id !== task.id));
+      showToast(
+        "success",
+        "Task deleted",
+        "The task has been deleted successfully."
+      );
+    } catch (error: any) {
+      console.error("Error deleting task:", error);
+      showToast(
+        "error",
+        "Failed to delete task",
+        error.message || "Please try again."
+      );
+    }
+  };
 
   const handleMembersUpdate = (updatedMembers: any[]) => {
     if (board) {
@@ -472,7 +501,7 @@ const handleToggleTask = async (task: Task) => {
           <CardContent>
             {completedTasks.length === 0 ? (
               <div className="text-center py-8">
-                <CheckCircle2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                < Award className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500">No completed tasks yet</p>
               </div>
             ) : (
@@ -480,44 +509,36 @@ const handleToggleTask = async (task: Task) => {
                 {completedTasks.map((task) => (
                   <div
                     key={task.id}
-                    className="p-4 rounded-xl border border-gray-100 bg-gray-50 group"
+                    className="p-4 rounded-xl border border-gray-100 bg-green-50 group flex items-start space-x-3"
                   >
-                    <div className="flex items-start space-x-3">
-                      <button
-                        onClick={() => handleToggleTask(task)}
-                        className="mt-0.5 text-green-500 hover:text-gray-400 transition-colors"
-                      >
-                        <CheckCircle2 className="w-5 h-5" />
-                      </button>
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-medium text-gray-600 line-through">
-                              {task.title}
-                            </h3>
-                            {task.notes && (
-                              <p className="text-sm text-gray-500 mt-1 line-through">
-                                {task.notes}
-                              </p>
-                            )}
-                            <div className="flex items-center text-xs text-gray-500 mt-2 space-x-4">
-                              <span>
-                                Completed:{" "}
-                                {format(
-                                  parseISO(task.updatedAt),
-                                  "MMM d, yyyy"
-                                )}
-                              </span>
-                            </div>
+                    {/* Congratulatory Icon */}
+                    < Award className="w-6 h-6 text-green-600 mt-1 flex-shrink-0" />
+
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium text-green-700">
+                            {task.title}
+                          </h3>
+                          {task.notes && (
+                            <p className="text-gray-900 mt-1">{task.notes}</p>
+                          )}
+                          <div className="flex items-center text-xs text-gray-500 mt-2 space-x-4">
+                            <span>
+                              Completed:{" "}
+                              {format(parseISO(task.updatedAt), "MMM d, yyyy")}
+                            </span>
                           </div>
-                          <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => handleDeleteTask(task)}
-                              className="p-1 text-gray-400 hover:text-red-600 rounded"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => handleDeleteTask(task)}
+                            className="p-1 text-gray-400 hover:text-red-600 rounded"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
                     </div>

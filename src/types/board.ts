@@ -6,7 +6,9 @@ export interface Board {
   updatedAt: string;
   members?: BoardMember[];
   tasks?: Task[];
+  activeTasks?: number; // 👈 add this
 }
+
 
 export interface BoardMember {
   userId: string;
@@ -26,6 +28,7 @@ export interface Task {
   notes?: string;
   startAt: string;
   endAt: string;
+  status: 'pending' | 'expired';  // <--- Add this
   isDone: boolean;
   createdById: string;
   createdAt: string;
