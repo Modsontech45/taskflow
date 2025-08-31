@@ -189,7 +189,6 @@ export function LandingPage() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center slide-up" style={{animationDelay: '0.4s'}}>
-            </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/login">
                 <Button size="lg" className="px-8 py-4 text-lg bg-gradient-to-r from-black to-pink-600 hover:from-purple-700 hover:to-pink-700 hover-lift pulse-glow">
