@@ -176,11 +176,11 @@ export function LandingPage() {
             </div>
             <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 slide-up">
               Organize Your Day,<br />
-              <span className="rainbow-bg bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                 Share the Wins
               </span>
             </h1>
-            <div className="slide-up" style={{animationDelay: '0.2s'}}>
+            <div>
               <p className="text-xl md:text-2xl text-gray-600 mb-4 max-w-3xl mx-auto leading-relaxed">
                 Create boards, add tasks, and celebrate progress with the people you love.
               </p>
@@ -188,7 +188,7 @@ export function LandingPage() {
                 <span className="inline-block wiggle">🌍</span> <strong>KaziFlow</strong> - from Swahili "kazi" (work) + "flow" - where your workflow becomes effortless
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center slide-up" style={{animationDelay: '0.4s'}}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/login">
                 <Button size="lg" className="px-8 py-4 text-lg bg-gradient-to-r from-black to-pink-600 hover:from-purple-700 hover:to-pink-700 hover-lift pulse-glow">
                   Start Free
@@ -220,7 +220,7 @@ export function LandingPage() {
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <Card key={index} className="text-center hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover-lift slide-up" style={{animationDelay: `${index * 0.1}s`}}>
+                <Card key={index} className="text-center hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover-lift">
                   <CardContent className="p-8">
                     <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-6 bounce-slow">
                       <Icon className="w-8 h-8 text-black" />
@@ -255,7 +255,7 @@ export function LandingPage() {
             {steps.map((step, index) => {
               const Icon = step.icon;
               return (
-                <div key={index} className="text-center slide-up" style={{animationDelay: `${index * 0.2}s`}}>
+                <div key={index} className="text-center">
                   <div className="relative mb-8">
                     <div className="w-20 h-20 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto shadow-lg pulse-glow bounce-slow">
                       {step.number}
@@ -281,15 +281,15 @@ export function LandingPage() {
       <div className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 slide-up">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
               See KaziFlow in Action
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto slide-up" style={{animationDelay: '0.2s'}}>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               A beautiful, intuitive interface that makes task management feel effortless and enjoyable.
             </p>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl p-8 md:p-12 slide-up hover-lift" style={{animationDelay: '0.4s'}}>
+          <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl p-8 md:p-12 hover-lift">
             <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 relative overflow-hidden">
               {/* Animated background pattern */}
               <div className="absolute inset-0 opacity-5">
@@ -399,13 +399,13 @@ export function LandingPage() {
         </div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 slide-up">
+          <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
             Make Every Day Count
           </h2>
-          <p className="text-xl text-purple-100 mb-10 max-w-2xl mx-auto slide-up" style={{animationDelay: '0.2s'}}>
+          <p className="text-xl text-purple-100 mb-10 max-w-2xl mx-auto">
             Start organizing your tasks and sharing your wins today. Your loved ones are waiting to celebrate with you.
           </p>
-          <div className="slide-up" style={{animationDelay: '0.4s'}}>
+          <div>
             <Link to="/login">
               <Button size="lg" className="px-12 py-4 text-lg bg-white text-purple-600 hover:bg-gray-100 shadow-xl hover-lift pulse-glow">
                 Get Started Today – It's Free

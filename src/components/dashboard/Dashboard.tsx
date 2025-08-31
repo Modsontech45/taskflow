@@ -130,12 +130,15 @@ const stats = {
       {/* Boards + Tasks */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Boards */}
-        <Card>
-          <CardHeader>
+        <Card className="bg-gradient-to-br from-white via-purple-50 to-pink-50 border-2 border-purple-100">
+          <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-t-xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">My Boards</h2>
+              <div className="flex items-center space-x-2">
+                <Folder className="w-6 h-6" />
+                <h2 className="text-xl font-bold">My Boards</h2>
+              </div>
               <Link to="/boards">
-                <Button variant="outline" size="sm">View All</Button>
+                <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">View All</Button>
               </Link>
             </div>
           </CardHeader>
@@ -145,15 +148,23 @@ const stats = {
             ) : (
               <div className="space-y-3">
                 {boards.slice(0, 5).map(board => (
-                  <Link key={board.id} to={`/boards/${board.id}`} className="block p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all duration-200">
+                  <Link key={board.id} to={`/boards/${board.id}`} className="block p-4 rounded-xl bg-white border-2 border-purple-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300 relative overflow-hidden group">
+                    {/* Decorative elements */}
+                    <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-purple-500 to-pink-500 opacity-10 rounded-bl-full"></div>
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 to-pink-500 transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300"></div>
+                    
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-medium text-gray-900">{board.name}</h3>
-                        <p className="text-sm text-gray-500 mt-1">{board.activeTasks} active tasks</p>
+                        <h3 className="font-bold text-gray-900 text-lg group-hover:text-purple-600 transition-colors">{board.name}</h3>
+                        <div className="flex items-center mt-2">
+                          <div className="bg-purple-100 px-2 py-1 rounded-full">
+                            <p className="text-xs font-bold text-purple-700">{board.activeTasks} active tasks</p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center text-gray-400">
-                        <Users className="w-4 h-4 mr-1" />
-                        <span className="text-sm">{board.members?.length || 1}</span>
+                      <div className="flex items-center bg-purple-50 px-3 py-2 rounded-full border border-purple-200">
+                        <Users className="w-4 h-4 text-purple-600 mr-1" />
+                        <span className="text-sm font-bold text-purple-700">{board.members?.length || 1}</span>
                       </div>
                     </div>
                   </Link>
@@ -164,13 +175,16 @@ const stats = {
         </Card>
 
         {/* Upcoming Tasks */}
-        <Card>
-          <CardHeader>
+        <Card className="bg-gradient-to-br from-white via-emerald-50 to-teal-50 border-2 border-emerald-100">
+          <CardHeader className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-t-xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Upcoming Tasks</h2>
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-6 h-6" />
+                <h2 className="text-xl font-bold">Upcoming Tasks</h2>
+              </div>
               {loadingTasks && <span className="text-sm text-gray-500">Loading tasks...</span>}
               <Link to="/boards">
-                <Button variant="outline" size="sm">View All</Button>
+                <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">View All</Button>
               </Link>
             </div>
           </CardHeader>
@@ -180,16 +194,21 @@ const stats = {
             ) : (
               <div className="space-y-3">
                 {upcomingTasks.map(task => (
-                  <div key={task.id} className="p-4 rounded-xl border border-gray-100">
+                  <div key={task.id} className="p-4 rounded-xl bg-white border-2 border-emerald-200 hover:border-emerald-300 hover:shadow-lg transition-all duration-300 relative overflow-hidden group">
+                    {/* Decorative accent */}
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-teal-500"></div>
+                    
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">{task.title}</h3>
-                        {task.notes && <p className="text-sm text-gray-500 mt-1 line-clamp-2">{task.notes}</p>}
+                        <h3 className="font-bold text-gray-900 text-lg">{task.title}</h3>
+                        {task.notes && <p className="text-sm text-gray-700 mt-2 bg-emerald-50 p-2 rounded-lg line-clamp-2">{task.notes}</p>}
                       </div>
-                      <div className="ml-4 text-right">
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {formatTaskDate(task.endAt)}
+                      <div className="ml-4">
+                        <div className="bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200">
+                          <div className="flex items-center">
+                            <Clock className="w-4 h-4 text-emerald-600 mr-1" />
+                            <span className="text-xs font-bold text-emerald-700">{formatTaskDate(task.endAt)}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -207,13 +226,14 @@ const stats = {
 // 🔹 Reusable Stat Card
 function StatCard({ icon, bg, label, value }: { icon: React.ReactNode; bg: string; label: string; value: number }) {
   return (
-    <Card>
+    <Card className="bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-300 group">
       <CardContent className="p-6">
-        <div className="flex items-center">
-          <div className={`p-3 ${bg} rounded-xl`}>{icon}</div>
+        <div className="flex items-center relative">
+          <div className={`p-4 ${bg} rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300`}>{icon}</div>
+          <div className="absolute top-0 right-0 w-6 h-6 bg-gray-100 rounded-full opacity-30"></div>
           <div className="ml-4">
-            <p className="text-sm font-medium text-gray-500">{label}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
+            <p className="text-sm font-bold text-gray-600 uppercase tracking-wide">{label}</p>
+            <p className="text-3xl font-black text-gray-900">{value}</p>
           </div>
         </div>
       </CardContent>
