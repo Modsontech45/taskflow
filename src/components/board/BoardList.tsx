@@ -9,7 +9,7 @@ import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
 import { 
-  Plus, Users, Calendar, CheckCircle2, Folder, Trash2 
+  Plus, Users, Calendar, CheckCircle2, Folder, Trash2, ArrowRight 
 } from 'lucide-react';
 
 export function BoardList() {
