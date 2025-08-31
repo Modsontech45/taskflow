@@ -21,6 +21,7 @@ import {
   Folder
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { Footer } from '../layout/Footer';
 
 export function ProfilePage() {
   const { user } = useAuth();
@@ -386,6 +387,8 @@ export function ProfilePage() {
           </div>
         </form>
       </Modal>
+      
+      <Footer />
     </div>
   );
 }

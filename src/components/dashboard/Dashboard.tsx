@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Plus, Users, Calendar, CheckCircle2, Clock, Folder } from "lucide-react";
 import { format, isToday, isTomorrow, parseISO } from "date-fns";
+import { Footer } from '../layout/Footer';
 
 export function Dashboard() {
   const { user } = useAuth();
@@ -219,6 +220,8 @@ const stats = {
           </CardContent>
         </Card>
       </div>
+      
+      <Footer />
     </div>
   );
 }

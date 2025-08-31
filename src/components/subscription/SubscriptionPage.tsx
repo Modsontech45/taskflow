@@ -15,6 +15,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { Footer } from '../layout/Footer';
 
 const PRICING: SubscriptionPricing = {
   basicPrice: 1.0,
@@ -391,6 +392,8 @@ export function SubscriptionPage() {
           </Card>
         </div>
       )}
+      
+      <Footer />
 
       {/* Pricing Examples */}
       <Card className="mt-8">

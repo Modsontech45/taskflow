@@ -11,6 +11,7 @@ import { Input } from '../ui/Input';
 import { 
   Plus, Users, Calendar, CheckCircle2, Folder, Trash2, ArrowRight 
 } from 'lucide-react';
+import { Footer } from '../layout/Footer';
 
 export function BoardList() {
   const { createNotification } = useNotifications();
@@ -235,6 +236,8 @@ export function BoardList() {
           </div>
         </div>
       </Modal>
+      
+      <Footer />
     </div>
   );
 }

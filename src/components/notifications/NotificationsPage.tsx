@@ -12,6 +12,7 @@ import {
   Clock
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { Footer } from '../layout/Footer';
 
 const notificationIcons = {
   BOARD_CREATED: Folder,
@@ -149,6 +150,8 @@ export function NotificationsPage() {
           })}
         </div>
       )}
+      
+      <Footer />
     </div>
   );
 }

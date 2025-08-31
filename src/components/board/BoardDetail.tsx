@@ -31,6 +31,7 @@ import {
   
 } from "lucide-react";
 import { formatISO, addDays, format, parseISO } from "date-fns";
+import { Footer } from '../layout/Footer';
 
 export function BoardDetail() {
   const { boardId } = useParams<{ boardId: string }>();
@@ -671,6 +672,8 @@ export function BoardDetail() {
           </div>
         </form>
       </Modal>
+      
+      <Footer />
     </div>
   );
 }
