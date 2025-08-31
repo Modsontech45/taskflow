@@ -185,7 +185,7 @@ export function BlogPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Why People Love TaskNest
+            Why People Love KaziFlow
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Join thousands who have transformed their daily productivity into a shared celebration
@@ -331,10 +331,10 @@ export function BlogPage() {
                 <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                   <CheckSquare className="w-5 h-5 text-white" />
                 </div>
-                <span className="font-bold text-xl">TaskNest</span>
+                <span className="font-bold text-xl">KaziFlow</span>
               </div>
               <p className="text-gray-400 mb-4 max-w-md">
-                A cozy place where your daily tasks live and grow. Share your progress and celebrate with the people you love.
+                From Swahili "kazi" (work) + "flow" - where your workflow becomes effortless. Share your progress and celebrate with the people you love.
               </p>
               <div className="flex items-center space-x-4">
                 <Globe className="w-5 h-5 text-gray-400" />
@@ -359,7 +359,7 @@ export function BlogPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 TaskNest. All rights reserved. Made for people who love to share their wins.</p>
+            <p>&copy; {new Date().getFullYear()} KaziFlow. All rights reserved. Made for people who love to share their wins.</p>
           </div>
         </div>
       </footer>
