@@ -7,6 +7,11 @@ export class ApiError extends Error {
   }
 }
 
+export interface SubscriptionResponse {
+  subscription: any; // or proper Subscription type
+  paymentUrl?: string; // optional Paystack checkout URL
+}
+
 export class ApiClient {
   private token: string | null = null;
   private requestId = 0;
@@ -210,12 +215,22 @@ async deleteTask(boardId: string, taskId: string) {
     return this.request(API_ENDPOINTS.SUBSCRIPTIONS(userId));
   }
 
-  async createSubscription(data: { plan: string }) {
-    return this.request(API_ENDPOINTS.SUBSCRIPTIONS_CREATE, {
+
+async createSubscription(data: { plan: string }): Promise<SubscriptionResponse> {
+  const response = (await this.request(
+    API_ENDPOINTS.SUBSCRIPTIONS_CREATE,
+    {
       method: 'POST',
       body: JSON.stringify(data),
-    });
-  }
+    }
+  )) as any; // response from backend
+
+  return {
+    subscription: response.subscription,
+    paymentUrl: response.paymentLink?.url, // map to `paymentUrl` here
+  };
+}
+
 
   async updateSubscription(userId: string, data: { memberCount?: number; status?: string }) {
     return this.request(API_ENDPOINTS.SUBSCRIPTIONS(userId), {

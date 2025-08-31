@@ -1,91 +1,128 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useToast } from '../ui/Toast';
-import { apiClient } from '../../services/api';
-import { Subscription, SubscriptionPricing } from '../../types/subscription';
-import { Card, CardContent, CardHeader } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { 
-  CreditCard, 
-  Users, 
-  Check, 
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../ui/Toast";
+import { apiClient } from "../../services/api";
+import { Subscription, SubscriptionPricing } from "../../types/subscription";
+import { Card, CardContent, CardHeader } from "../ui/Card";
+import { Button } from "../ui/Button";
+import {
+  CreditCard,
+  Users,
+  Check,
   Star,
   Calendar,
   DollarSign,
-  AlertCircle
-} from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+  AlertCircle,
+} from "lucide-react";
+import { format, parseISO } from "date-fns";
 
 const PRICING: SubscriptionPricing = {
-  basicPrice: 1.00,
-  memberPrice: 0.50,
+  basicPrice: 1.0,
+  memberPrice: 0.5,
 };
 
 export function SubscriptionPage() {
   const { user } = useAuth();
   const { showToast } = useToast();
+
   const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      loadSubscription();
-    }
+    if (user) loadSubscription();
   }, [user]);
 
   const loadSubscription = async () => {
     if (!user) return;
-    
+
     try {
       const data = await apiClient.getSubscription(user.id);
-      setSubscription(data);
+
+      // normalize monthlyPrice
+      setSubscription({
+        ...data.subscription,
+        monthlyPrice: data.subscription?.monthlyPrice ?? 0,
+      });
+      if (data.paymentUrl) setPaymentUrl(data.paymentUrl);
     } catch (error: any) {
       if (error.status !== 404) {
-        console.error('Error loading subscription:', error);
-        showToast('error', 'Failed to load subscription', 'Please try again.');
+        console.error("Error loading subscription:", error);
+        showToast("error", "Failed to load subscription", "Please try again.");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateSubscription = async (plan: 'BASIC' | 'TEAM') => {
-    setUpdating(true);
-    try {
-      const newSubscription = await apiClient.createSubscription({ plan });
-      setSubscription(newSubscription);
-      showToast('success', 'Subscription created', 'Your subscription has been activated.');
-    } catch (error: any) {
-      console.error('Error creating subscription:', error);
-      showToast('error', 'Failed to create subscription', error.message || 'Please try again.');
-    } finally {
-      setUpdating(false);
+ const handleCreateSubscription = async (plan: "BASIC" | "TEAM") => {
+  setUpdating(true);
+  try {
+    const data = await apiClient.createSubscription({ plan });
+
+    // set subscription and payment URL
+    setSubscription({
+      ...data.subscription,
+      monthlyPrice: data.subscription?.monthlyPrice ?? 0,
+    });
+    if (data.paymentUrl) {
+      setPaymentUrl(data.paymentUrl);
+      // redirect user to Paystack checkout
+      window.open(data.paymentUrl, "_blank");
     }
-  };
+
+    showToast(
+      "success",
+      "Subscription created",
+      data.subscription.status === "PENDING"
+        ? "Please complete your payment."
+        : "Your subscription has been activated."
+    );
+  } catch (error: any) {
+    console.error("Error creating subscription:", error);
+    showToast(
+      "error",
+      "Failed to create subscription",
+      error.message || "Please try again."
+    );
+  } finally {
+    setUpdating(false);
+  }
+};
+
 
   const handleCancelSubscription = async () => {
     if (!subscription || !user) return;
-    
-    if (!window.confirm('Are you sure you want to cancel your subscription?')) return;
+
+    if (!window.confirm("Are you sure you want to cancel your subscription?"))
+      return;
 
     setUpdating(true);
     try {
-      await apiClient.updateSubscription(user.id, { status: 'CANCELLED' });
-      setSubscription(prev => prev ? { ...prev, status: 'CANCELLED' } : null);
-      showToast('success', 'Subscription cancelled', 'Your subscription has been cancelled.');
+      await apiClient.updateSubscription(user.id, { status: "CANCELLED" });
+      setSubscription((prev) =>
+        prev ? { ...prev, status: "CANCELLED" } : null
+      );
+      showToast(
+        "success",
+        "Subscription cancelled",
+        "Your subscription has been cancelled."
+      );
     } catch (error: any) {
-      console.error('Error cancelling subscription:', error);
-      showToast('error', 'Failed to cancel subscription', error.message || 'Please try again.');
+      console.error("Error cancelling subscription:", error);
+      showToast(
+        "error",
+        "Failed to cancel subscription",
+        error.message || "Please try again."
+      );
     } finally {
       setUpdating(false);
     }
   };
 
   const calculatePrice = (memberCount: number) => {
-    if (memberCount === 0) {
-      return PRICING.basicPrice;
-    }
+    if (!memberCount) return PRICING.basicPrice;
     return memberCount * PRICING.memberPrice;
   };
 
@@ -93,10 +130,10 @@ export function SubscriptionPage() {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="animate-pulse space-y-8">
-          <div className="h-8 bg-gray-200 rounded w-64"></div>
+          <div className="h-8 bg-gray-200 rounded w-64" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[...Array(2)].map((_, i) => (
-              <div key={i} className="h-80 bg-gray-200 rounded-xl"></div>
+              <div key={i} className="h-80 bg-gray-200 rounded-xl" />
             ))}
           </div>
         </div>
@@ -125,19 +162,25 @@ export function SubscriptionPage() {
                     <CreditCard className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Current Plan</h2>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Current Plan
+                    </h2>
                     <p className="text-sm text-gray-600">
-                      {subscription.plan === 'BASIC' ? 'Basic Plan' : 'Team Plan'}
+                      {subscription.plan === "BASIC"
+                        ? "Basic Plan"
+                        : "Team Plan"}
                     </p>
                   </div>
                 </div>
-                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  subscription.status === 'ACTIVE' 
-                    ? 'bg-green-100 text-green-800'
-                    : subscription.status === 'CANCELLED'
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
+                <div
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    subscription.status === "ACTIVE"
+                      ? "bg-green-100 text-green-800"
+                      : subscription.status === "CANCELLED"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-yellow-100 text-yellow-800"
+                  }`}
+                >
                   {subscription.status}
                 </div>
               </div>
@@ -167,13 +210,32 @@ export function SubscriptionPage() {
                   <div>
                     <p className="text-sm text-gray-600">Next Billing</p>
                     <p className="text-lg font-semibold text-gray-900">
-                      {format(parseISO(subscription.nextBillingDate), 'MMM d, yyyy')}
+                      {subscription.nextBillingDate
+                        ? format(
+                            parseISO(subscription.nextBillingDate),
+                            "MMM d, yyyy"
+                          )
+                        : "—"}
                     </p>
                   </div>
                 </div>
               </div>
-              
-              {subscription.status === 'ACTIVE' && (
+
+              {subscription.status === "PENDING" && paymentUrl && (
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                  <Button
+                    as="a"
+                    href={paymentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full bg-blue-600 text-white"
+                  >
+                    Complete Payment
+                  </Button>
+                </div>
+              )}
+
+              {subscription.status === "ACTIVE" && (
                 <div className="mt-6 pt-6 border-t border-gray-100">
                   <Button
                     onClick={handleCancelSubscription}
@@ -191,14 +253,20 @@ export function SubscriptionPage() {
           {/* Pricing Information */}
           <Card>
             <CardHeader>
-              <h3 className="text-lg font-semibold text-gray-900">Pricing Information</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Pricing Information
+              </h3>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                   <div>
-                    <p className="font-medium text-gray-900">Basic Plan (No Members)</p>
-                    <p className="text-sm text-gray-600">Perfect for individual use</p>
+                    <p className="font-medium text-gray-900">
+                      Basic Plan (No Members)
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Perfect for individual use
+                    </p>
                   </div>
                   <p className="text-lg font-semibold text-gray-900">
                     ${PRICING.basicPrice.toFixed(2)}/month
@@ -206,8 +274,12 @@ export function SubscriptionPage() {
                 </div>
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                   <div>
-                    <p className="font-medium text-gray-900">Team Plan (Per Member)</p>
-                    <p className="text-sm text-gray-600">Collaborate with your team</p>
+                    <p className="font-medium text-gray-900">
+                      Team Plan (Per Member)
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Collaborate with your team
+                    </p>
                   </div>
                   <p className="text-lg font-semibold text-gray-900">
                     ${PRICING.memberPrice.toFixed(2)}/member/month
@@ -224,7 +296,9 @@ export function SubscriptionPage() {
           <Card className="relative">
             <CardHeader>
               <div className="text-center">
-                <h3 className="text-xl font-semibold text-gray-900">Basic Plan</h3>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Basic Plan
+                </h3>
                 <p className="text-gray-600 mt-2">Perfect for individual use</p>
                 <div className="mt-4">
                   <span className="text-3xl font-bold text-gray-900">
@@ -238,7 +312,9 @@ export function SubscriptionPage() {
               <ul className="space-y-3 mb-6">
                 <li className="flex items-center">
                   <Check className="w-5 h-5 text-green-500 mr-3" />
-                  <span className="text-gray-700">Unlimited personal boards</span>
+                  <span className="text-gray-700">
+                    Unlimited personal boards
+                  </span>
                 </li>
                 <li className="flex items-center">
                   <Check className="w-5 h-5 text-green-500 mr-3" />
@@ -254,7 +330,7 @@ export function SubscriptionPage() {
                 </li>
               </ul>
               <Button
-                onClick={() => handleCreateSubscription('BASIC')}
+                onClick={() => handleCreateSubscription("BASIC")}
                 loading={updating}
                 className="w-full"
               >
@@ -273,7 +349,9 @@ export function SubscriptionPage() {
             </div>
             <CardHeader>
               <div className="text-center">
-                <h3 className="text-xl font-semibold text-gray-900">Team Plan</h3>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Team Plan
+                </h3>
                 <p className="text-gray-600 mt-2">Collaborate with your team</p>
                 <div className="mt-4">
                   <span className="text-3xl font-bold text-gray-900">
@@ -303,7 +381,7 @@ export function SubscriptionPage() {
                 </li>
               </ul>
               <Button
-                onClick={() => handleCreateSubscription('TEAM')}
+                onClick={() => handleCreateSubscription("TEAM")}
                 loading={updating}
                 className="w-full"
               >
@@ -317,7 +395,9 @@ export function SubscriptionPage() {
       {/* Pricing Examples */}
       <Card className="mt-8">
         <CardHeader>
-          <h3 className="text-lg font-semibold text-gray-900">Pricing Examples</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Pricing Examples
+          </h3>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
