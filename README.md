@@ -1,6 +1,6 @@
-# Task Management Platform
+# KaziFlow - Task Management Platform
 
-A modern, responsive task management platform built with React, TypeScript, and Tailwind CSS. This frontend application integrates seamlessly with a Node.js + Express + PostgreSQL backend API.
+A modern, responsive task management platform built with React, TypeScript, and Tailwind CSS. KaziFlow (from Swahili "kazi" meaning work + "flow") makes your workflow effortless. This frontend application integrates seamlessly with a Node.js + Express + PostgreSQL backend API.
 
 ## Features
 

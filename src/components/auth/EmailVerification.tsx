@@ -64,7 +64,7 @@ export function EmailVerification() {
             <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mr-3">
               <CheckSquare className="w-6 h-6 text-white" />
             </div>
-            <span className="font-bold text-xl text-gray-900">TaskNest</span>
+            <span className="font-bold text-xl text-gray-900">KaziFlow</span>
           </div>
 
           <div className="mb-6">{getIcon()}</div>

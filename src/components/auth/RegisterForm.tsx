@@ -102,7 +102,7 @@ export function RegisterForm() {
                 <CheckSquare className="w-6 h-6 text-white" />
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Join TaskNest</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Join KaziFlow</h1>
             <p className="text-gray-600 mt-2">Create your cozy space for tasks and celebrations</p>
           </div>
 

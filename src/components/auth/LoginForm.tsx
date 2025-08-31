@@ -64,7 +64,7 @@ export function LoginForm() {
                 <CheckSquare className="w-6 h-6 text-white" />
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Welcome back to TaskNest</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Welcome back to KaziFlow</h1>
             <p className="text-gray-600 mt-2">Sign in to your cozy task management space</p>
           </div>
 
