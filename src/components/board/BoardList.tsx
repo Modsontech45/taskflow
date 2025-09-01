@@ -143,69 +143,54 @@ export function BoardList() {
             const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
             
             return (
-              <Card key={board.id} hover className="group relative overflow-hidden bg-gradient-to-br from-white via-blue-50 to-purple-50 border-2 border-transparent hover:border-purple-200 transition-all duration-300">
-                {/* Decorative corner accent */}
-                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-purple-500 to-pink-500 opacity-10 rounded-bl-full"></div>
-                
-                <CardContent className="p-6 relative z-10">
+              <Card key={board.id} hover className="group">
+                <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
-                      <Link to={`/boards/${board.id}`} className="block hover:text-purple-600 transition-colors">
-                        <h3 className="text-xl font-bold text-gray-900 group-hover:text-purple-600 mb-2">{board.name}</h3>
+                      <Link to={`/boards/${board.id}`} className="block hover:text-blue-600 transition-colors">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">{board.name}</h3>
                       </Link>
-                      <p className="text-sm text-gray-600 font-medium">
+                      <p className="text-sm text-gray-600">
                         Created {new Date(board.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110">
-                      <button
-                        onClick={() => { setDeletingBoard(board); setDeleteModalOpen(true); }}
-                        className="p-2 text-gray-400 hover:text-red-600 rounded-xl hover:bg-red-50 transition-all duration-200 hover:scale-110"
-                        title="Delete board"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <button
+                      onClick={() => { setDeletingBoard(board); setDeleteModalOpen(true); }}
+                      className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                      title="Delete board"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
+                    <div className="flex items-center">
+                      <CheckCircle2 className="w-4 h-4 text-green-500 mr-1" />
+                      <span>{completedTasks} completed</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 text-blue-500 mr-1" />
+                      <span>{pendingTasks} pending</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Users className="w-4 h-4 text-purple-500 mr-1" />
+                      <span>{board.members?.length || 1} members</span>
                     </div>
                   </div>
 
-                  {/* Progress bar */}
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Progress</span>
-                      <span className="text-sm font-bold text-purple-600">{completionRate}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: `${completionRate}%` }}
-                      ></div>
-                    </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                    <div 
+                      className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                      style={{ width: `${completionRate}%` }}
+                    ></div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="text-center p-3 bg-green-50 rounded-xl border border-green-100">
-                      <CheckCircle2 className="w-5 h-5 text-green-600 mx-auto mb-1" />
-                      <p className="text-lg font-bold text-green-700">{completedTasks}</p>
-                      <p className="text-xs text-green-600 font-medium">Completed</p>
-                    </div>
-                    <div className="text-center p-3 bg-blue-50 rounded-xl border border-blue-100">
-                      <Calendar className="w-5 h-5 text-blue-600 mx-auto mb-1" />
-                      <p className="text-lg font-bold text-blue-700">{pendingTasks}</p>
-                      <p className="text-xs text-blue-600 font-medium">Pending</p>
-                    </div>
-                    <div className="text-center p-3 bg-purple-50 rounded-xl border border-purple-100">
-                      <Users className="w-5 h-5 text-purple-600 mx-auto mb-1" />
-                      <p className="text-lg font-bold text-purple-700">{board.members?.length || 1}</p>
-                      <p className="text-xs text-purple-600 font-medium">Members</p>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-gray-200">
-                    <Link to={`/boards/${board.id}`} className="inline-flex items-center justify-center w-full py-2 px-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-200 hover:scale-105 hover:shadow-lg">
+                  <Link to={`/boards/${board.id}`}>
+                    <Button className="w-full">
                       View Board
                       <ArrowRight className="w-4 h-4 ml-2" />
-                    </Link>
-                  </div>
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             );

@@ -370,16 +370,15 @@ export function BoardDetail() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="bg-gradient-to-br from-white to-blue-50 border-2 border-blue-100 hover:border-blue-200 transition-all duration-300 hover:shadow-lg">
+        <Card>
           <CardContent className="p-6">
-            <div className="flex items-center relative">
-              <div className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg">
+            <div className="flex items-center">
+              <div className="p-3 bg-blue-100 rounded-lg">
                 <Calendar className="w-6 h-6 text-blue-600" />
               </div>
-              <div className="absolute top-0 right-0 w-8 h-8 bg-blue-100 rounded-full opacity-20"></div>
               <div className="ml-4">
-                <p className="text-sm font-bold text-blue-600 uppercase tracking-wide">Total Tasks</p>
-                <p className="text-3xl font-black text-gray-900">
+                <p className="text-sm text-gray-600">Total Tasks</p>
+                <p className="text-2xl font-bold text-gray-900">
                   {tasks.length}
                 </p>
               </div>
@@ -387,16 +386,15 @@ export function BoardDetail() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-white to-green-50 border-2 border-green-100 hover:border-green-200 transition-all duration-300 hover:shadow-lg">
+        <Card>
           <CardContent className="p-6">
-            <div className="flex items-center relative">
-              <div className="p-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg">
+            <div className="flex items-center">
+              <div className="p-3 bg-green-100 rounded-lg">
                 <CheckCircle2 className="w-6 h-6 text-green-600" />
               </div>
-              <div className="absolute top-0 right-0 w-8 h-8 bg-green-100 rounded-full opacity-20"></div>
               <div className="ml-4">
-                <p className="text-sm font-bold text-green-600 uppercase tracking-wide">Completed</p>
-                <p className="text-3xl font-black text-gray-900">
+                <p className="text-sm text-gray-600">Completed</p>
+                <p className="text-2xl font-bold text-gray-900">
                   {completedTasks.length}
                 </p>
               </div>
@@ -404,16 +402,15 @@ export function BoardDetail() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-white to-amber-50 border-2 border-amber-100 hover:border-amber-200 transition-all duration-300 hover:shadow-lg">
+        <Card>
           <CardContent className="p-6">
-            <div className="flex items-center relative">
-              <div className="p-4 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-lg">
+            <div className="flex items-center">
+              <div className="p-3 bg-amber-100 rounded-lg">
                 <Clock className="w-6 h-6 text-amber-600" />
               </div>
-              <div className="absolute top-0 right-0 w-8 h-8 bg-amber-100 rounded-full opacity-20"></div>
               <div className="ml-4">
-                <p className="text-sm font-bold text-amber-600 uppercase tracking-wide">Pending</p>
-                <p className="text-3xl font-black text-gray-900">
+                <p className="text-sm text-gray-600">Pending</p>
+                <p className="text-2xl font-bold text-gray-900">
                   {pendingTasks.length}
                 </p>
               </div>
@@ -425,16 +422,12 @@ export function BoardDetail() {
       {/* Tasks */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Pending Tasks */}
-        <Card className="bg-gradient-to-br from-white via-amber-50 to-orange-50 border-2 border-amber-100">
-          <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-t-xl">
-            <div className="flex items-center space-x-2">
-              <Clock className="w-6 h-6" />
-              <h2 className="text-xl font-bold">
-              Pending Tasks
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Pending Tasks ({pendingTasks.length})
               </h2>
-              <div className="ml-auto bg-white/20 px-3 py-1 rounded-full">
-                <span className="text-sm font-bold">{pendingTasks.length}</span>
-              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -452,49 +445,44 @@ export function BoardDetail() {
                 {pendingTasks.map((task) => (
                   <div
                     key={task.id}
-                    className="p-4 rounded-xl bg-white border-2 border-amber-200 hover:border-amber-300 hover:shadow-lg transition-all duration-300 group relative overflow-hidden"
+                    className="p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200"
                   >
-                    {/* Decorative accent */}
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-500 to-orange-500"></div>
-                    
                     <div className="flex items-start space-x-3">
                       <button
                         onClick={() => handleToggleTask(task)}
-                        className="mt-0.5 text-amber-300 hover:text-green-500 transition-all duration-200 hover:scale-110"
+                        className="mt-0.5 text-gray-300 hover:text-green-500 transition-colors"
                       >
-                        <Circle className="w-6 h-6 border-2" />
+                        <Circle className="w-5 h-5" />
                       </button>
                       <div className="flex-1">
                         <div className="flex items-start justify-between">
                           <div>
-                            <h3 className="font-bold text-gray-900 text-lg">
+                            <h3 className="font-medium text-gray-900">
                               {task.title}
                             </h3>
                             {task.notes && (
-                              <p className="text-sm text-gray-700 mt-2 bg-amber-50 p-2 rounded-lg">
+                              <p className="text-sm text-gray-600 mt-1">
                                 {task.notes}
                               </p>
                             )}
-                            <div className="flex items-center mt-3">
-                              <div className="flex items-center bg-amber-100 px-3 py-1 rounded-full">
-                                <Calendar className="w-4 h-4 text-amber-600 mr-1" />
-                                <span className="text-xs font-medium text-amber-700">
-                                Due:{" "}
+                            <div className="flex items-center mt-2 text-xs text-gray-500">
+                              <Calendar className="w-4 h-4 mr-1" />
+                              <span>
+                                Due {" "}
                                 {format(parseISO(task.endAt), "MMM d, yyyy")}
-                                </span>
-                              </div>
+                              </span>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110">
+                          <div className="flex items-center space-x-1">
                             <button
                               onClick={() => handleEditTask(task)}
-                              className="p-2 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-all duration-200"
+                              className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteTask(task)}
-                              className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all duration-200"
+                              className="p-1 text-gray-400 hover:text-red-600 transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -510,16 +498,12 @@ export function BoardDetail() {
         </Card>
 
         {/* Completed Tasks */}
-        <Card className="bg-gradient-to-br from-white via-green-50 to-emerald-50 border-2 border-green-100">
-          <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-t-xl">
-            <div className="flex items-center space-x-2">
-              <Award className="w-6 h-6" />
-              <h2 className="text-xl font-bold">
-              Completed Tasks
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Completed Tasks ({completedTasks.length})
               </h2>
-              <div className="ml-auto bg-white/20 px-3 py-1 rounded-full">
-                <span className="text-sm font-bold">{completedTasks.length}</span>
-              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -533,53 +517,38 @@ export function BoardDetail() {
                 {completedTasks.map((task) => (
                   <div
                     key={task.id}
-                    className="p-4 rounded-xl bg-white border-2 border-green-200 hover:border-green-300 hover:shadow-lg transition-all duration-300 group relative overflow-hidden"
+                    className="p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200 opacity-75"
                   >
-                    {/* Decorative accent */}
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-green-500 to-emerald-500"></div>
-                    
-                    {/* Success pattern */}
-                    <div className="absolute top-2 right-2 opacity-10">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                      </div>
-                    </div>
-
                     <div className="flex items-start space-x-3">
-                      <div className="mt-1 p-1 bg-green-100 rounded-full">
-                        <CheckCircle2 className="w-5 h-5 text-green-600" />
-                      </div>
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5" />
                       <div className="flex-1">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-bold text-gray-900 text-lg line-through decoration-green-500 decoration-2">
-                            {task.title}
-                          </h3>
-                          {task.notes && (
-                            <p className="text-sm text-gray-700 mt-2 bg-green-50 p-2 rounded-lg border border-green-100">{task.notes}</p>
-                          )}
-                          <div className="flex items-center mt-3">
-                            <div className="flex items-center bg-green-100 px-3 py-1 rounded-full">
-                              <Award className="w-4 h-4 text-green-600 mr-1" />
-                              <span className="text-xs font-medium text-green-700">
-                              Completed:{" "}
-                              {format(parseISO(task.updatedAt), "MMM d, yyyy")}
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-medium text-gray-900 line-through">
+                              {task.title}
+                            </h3>
+                            {task.notes && (
+                              <p className="text-sm text-gray-600 mt-1 line-through">
+                                {task.notes}
+                              </p>
+                            )}
+                            <div className="flex items-center mt-2 text-xs text-gray-500">
+                              <CheckCircle2 className="w-4 h-4 mr-1" />
+                              <span>
+                                Completed {format(parseISO(task.updatedAt), "MMM d, yyyy")}
                               </span>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110">
-                          <button
-                            onClick={() => handleDeleteTask(task)}
-                            className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all duration-200"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center space-x-1">
+                            <button
+                              onClick={() => handleDeleteTask(task)}
+                              className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
                       </div>
                     </div>
                   </div>

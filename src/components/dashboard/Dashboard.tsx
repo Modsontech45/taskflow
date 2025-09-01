@@ -122,24 +122,69 @@ const stats = {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <StatCard icon={<Folder className="w-6 h-6 text-blue-600" />} bg="bg-blue-100" label="Total Boards" value={stats.totalBoards} />
-        <StatCard icon={<CheckCircle2 className="w-6 h-6 text-green-600" />} bg="bg-green-100" label="Completed Tasks" value={stats.completedTasks} />
-        <StatCard icon={<Clock className="w-6 h-6 text-amber-600" />} bg="bg-amber-100" label="Pending Tasks" value={stats.totalTasks} />
-        <StatCard icon={<Users className="w-6 h-6 text-purple-600" />} bg="bg-purple-100" label="Team Members" value={stats.totalMembers} />
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <Folder className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm text-gray-600">Total Boards</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.totalBoards}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="p-3 bg-green-100 rounded-lg">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm text-gray-600">Completed Tasks</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.completedTasks}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="p-3 bg-amber-100 rounded-lg">
+                <Clock className="w-6 h-6 text-amber-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm text-gray-600">Pending Tasks</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.totalTasks}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="p-3 bg-purple-100 rounded-lg">
+                <Users className="w-6 h-6 text-purple-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm text-gray-600">Team Members</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.totalMembers}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Boards + Tasks */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Boards */}
-        <Card className="bg-gradient-to-br from-white via-purple-50 to-pink-50 border-2 border-purple-100">
-          <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-t-xl">
+        <Card>
+          <CardHeader>
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Folder className="w-6 h-6" />
-                <h2 className="text-xl font-bold">My Boards</h2>
-              </div>
+              <h2 className="text-lg font-semibold text-gray-900">My Boards</h2>
               <Link to="/boards">
-                <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">View All</Button>
+                <Button variant="ghost" size="sm">View All</Button>
               </Link>
             </div>
           </CardHeader>
@@ -149,23 +194,15 @@ const stats = {
             ) : (
               <div className="space-y-3">
                 {boards.slice(0, 5).map(board => (
-                  <Link key={board.id} to={`/boards/${board.id}`} className="block p-4 rounded-xl bg-white border-2 border-purple-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300 relative overflow-hidden group">
-                    {/* Decorative elements */}
-                    <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-purple-500 to-pink-500 opacity-10 rounded-bl-full"></div>
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 to-pink-500 transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300"></div>
-                    
+                  <Link key={board.id} to={`/boards/${board.id}`} className="block p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-bold text-gray-900 text-lg group-hover:text-purple-600 transition-colors">{board.name}</h3>
-                        <div className="flex items-center mt-2">
-                          <div className="bg-purple-100 px-2 py-1 rounded-full">
-                            <p className="text-xs font-bold text-purple-700">{board.activeTasks} active tasks</p>
-                          </div>
-                        </div>
+                        <h3 className="font-medium text-gray-900">{board.name}</h3>
+                        <p className="text-sm text-gray-600">{board.activeTasks} active tasks</p>
                       </div>
-                      <div className="flex items-center bg-purple-50 px-3 py-2 rounded-full border border-purple-200">
+                      <div className="flex items-center text-sm text-gray-500">
                         <Users className="w-4 h-4 text-purple-600 mr-1" />
-                        <span className="text-sm font-bold text-purple-700">{board.members?.length || 1}</span>
+                        <span>{board.members?.length || 1}</span>
                       </div>
                     </div>
                   </Link>
@@ -176,16 +213,12 @@ const stats = {
         </Card>
 
         {/* Upcoming Tasks */}
-        <Card className="bg-gradient-to-br from-white via-emerald-50 to-teal-50 border-2 border-emerald-100">
-          <CardHeader className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-t-xl">
+        <Card>
+          <CardHeader>
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-6 h-6" />
-                <h2 className="text-xl font-bold">Upcoming Tasks</h2>
-              </div>
-              {loadingTasks && <span className="text-sm text-gray-500">Loading tasks...</span>}
+              <h2 className="text-lg font-semibold text-gray-900">Upcoming Tasks</h2>
               <Link to="/boards">
-                <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">View All</Button>
+                <Button variant="ghost" size="sm">View All</Button>
               </Link>
             </div>
           </CardHeader>
@@ -195,22 +228,15 @@ const stats = {
             ) : (
               <div className="space-y-3">
                 {upcomingTasks.map(task => (
-                  <div key={task.id} className="p-4 rounded-xl bg-white border-2 border-emerald-200 hover:border-emerald-300 hover:shadow-lg transition-all duration-300 relative overflow-hidden group">
-                    {/* Decorative accent */}
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-teal-500"></div>
-                    
+                  <div key={task.id} className="p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-bold text-gray-900 text-lg">{task.title}</h3>
-                        {task.notes && <p className="text-sm text-gray-700 mt-2 bg-emerald-50 p-2 rounded-lg line-clamp-2">{task.notes}</p>}
+                        <h3 className="font-medium text-gray-900">{task.title}</h3>
+                        {task.notes && <p className="text-sm text-gray-600 mt-1 line-clamp-2">{task.notes}</p>}
                       </div>
-                      <div className="ml-4">
-                        <div className="bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200">
-                          <div className="flex items-center">
-                            <Clock className="w-4 h-4 text-emerald-600 mr-1" />
-                            <span className="text-xs font-bold text-emerald-700">{formatTaskDate(task.endAt)}</span>
-                          </div>
-                        </div>
+                      <div className="ml-4 text-xs text-gray-500">
+                        <Clock className="w-4 h-4 inline mr-1" />
+                        {formatTaskDate(task.endAt)}
                       </div>
                     </div>
                   </div>
@@ -224,24 +250,7 @@ const stats = {
       <Footer />
     </div>
   );
-}
 
-// 🔹 Reusable Stat Card
-function StatCard({ icon, bg, label, value }: { icon: React.ReactNode; bg: string; label: string; value: number }) {
-  return (
-    <Card className="bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-300 group">
-      <CardContent className="p-6">
-        <div className="flex items-center relative">
-          <div className={`p-4 ${bg} rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300`}>{icon}</div>
-          <div className="absolute top-0 right-0 w-6 h-6 bg-gray-100 rounded-full opacity-30"></div>
-          <div className="ml-4">
-            <p className="text-sm font-bold text-gray-600 uppercase tracking-wide">{label}</p>
-            <p className="text-3xl font-black text-gray-900">{value}</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
 }
 
 // 🔹 Reusable Empty State
