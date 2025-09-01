@@ -642,7 +642,9 @@ export function BoardDetail() {
         </form>
       </Modal>
       
-      <Footer />
+      <div className="mt-16">
+        <Footer />
+      </div>
     </div>
   );
 }

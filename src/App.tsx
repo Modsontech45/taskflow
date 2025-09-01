@@ -124,7 +124,9 @@ function App() {
       <NotificationProvider>
         <ToastProvider>
           <Router>
-            <AppContent />
+            <div className="min-h-screen flex flex-col">
+              <AppContent />
+            </div>
           </Router>
         </ToastProvider>
       </NotificationProvider>

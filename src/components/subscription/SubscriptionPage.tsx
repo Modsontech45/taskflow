@@ -393,7 +393,9 @@ export function SubscriptionPage() {
         </div>
       )}
       
-      <Footer />
+      <div className="mt-16">
+        <Footer />
+      </div>
 
       {/* Pricing Examples */}
       <Card className="mt-8">
