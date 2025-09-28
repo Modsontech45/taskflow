@@ -92,24 +92,52 @@ const stats = {
 };
 
 
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="animate-pulse space-y-8">
-          <div className="h-8 bg-gray-200 rounded w-64"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded-xl"></div>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="h-80 bg-gray-200 rounded-xl"></div>
-            <div className="h-80 bg-gray-200 rounded-xl"></div>
-          </div>
+if (loading) {
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col items-center justify-center min-h-[60vh]">
+      {/* Spinner */}
+      <div className="flex items-center justify-center space-x-2 mb-8">
+        <svg
+          className="animate-spin h-10 w-10 text-blue-600"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          ></circle>
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+          ></path>
+        </svg>
+        <span className="text-lg font-medium text-gray-700">Loading...</span>
+      </div>
+
+      {/* Skeleton blocks */}
+      <div className="animate-pulse space-y-8 w-full">
+        <div className="h-8 bg-gray-200 rounded w-64 mx-auto"></div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-24 bg-gray-200 rounded-xl"></div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="h-80 bg-gray-200 rounded-xl"></div>
+          <div className="h-80 bg-gray-200 rounded-xl"></div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
+
+  
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

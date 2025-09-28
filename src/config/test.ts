@@ -3,7 +3,7 @@
 // API Configuration
 export const API_CONFIG = {
   BASE_URL: 'https://taskflowbackend-0hbp.onrender.com/api',
-  TIMEOUT: 10000,
+  TIMEOUT: 30000,
   RETRY_ATTEMPTS: 3,
 } as const;
 
@@ -78,32 +78,4 @@ BOARD_TASKS: (boardId: string) => `/boards/${boardId}/tasks`,
 
 
 
-// // API Configuration
-// export const API_CONFIG = {
-//   BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-//   TIMEOUT: 30000,
-//   RETRY_ATTEMPTS: 3,
-// } as const;
-
-// // Environment detection
-// export const isDevelopment = import.meta.env.DEV;
-// export const isProduction = import.meta.env.PROD;
-
-// // Logging configuration
-// export const ENABLE_API_LOGGING = isDevelopment;
-
-// // API endpoints
-// export const API_ENDPOINTS = {
-//   // Auth
-//   AUTH_LOGIN: '/auth/login',
-//   AUTH_REGISTER: '/auth/register',
-//   AUTH_VERIFY_EMAIL: '/auth/verify-email',
-//   AUTH_REQUEST_PASSWORD_RESET: '/auth/request-password-reset',
-//   AUTH_RESET_PASSWORD: '/auth/reset-password',
-
-//   // Boards
-
-//   // Tasks
-//   TASK_DETAIL: (boardId: string, taskId: string) => `/boards/${boardId}/tasks/${taskId}`,
-//   TASK_TOGGLE: (boardId: string, taskId: string) => `/boards/${boardId}/tasks/${taskId}/toggle`,
-// } as const;
+// // API
