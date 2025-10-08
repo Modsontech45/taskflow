@@ -10,14 +10,14 @@ export interface Board {
 }
 
 
-export interface BoardMember {
+export interface  BoardMember {
   userId: string;
   role: 'OWNER' | 'EDITOR' | 'VIEWER';
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
   user?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
   };
 }
 
