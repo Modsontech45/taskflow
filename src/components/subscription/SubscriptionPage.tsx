@@ -56,41 +56,40 @@ export function SubscriptionPage() {
     }
   };
 
- const handleCreateSubscription = async (plan: "BASIC" | "TEAM") => {
-  setUpdating(true);
-  try {
-    const data = await apiClient.createSubscription({ plan });
+  const handleCreateSubscription = async (plan: "BASIC" | "TEAM") => {
+    setUpdating(true);
+    try {
+      const data = await apiClient.createSubscription({ plan });
 
-    // set subscription and payment URL
-    setSubscription({
-      ...data.subscription,
-      monthlyPrice: data.subscription?.monthlyPrice ?? 0,
-    });
-    if (data.paymentUrl) {
-      setPaymentUrl(data.paymentUrl);
-      // redirect user to Paystack checkout
-      window.open(data.paymentUrl, "_blank");
+      // set subscription and payment URL
+      setSubscription({
+        ...data.subscription,
+        monthlyPrice: data.subscription?.monthlyPrice ?? 0,
+      });
+      if (data.paymentUrl) {
+        setPaymentUrl(data.paymentUrl);
+        // redirect user to Paystack checkout
+        window.open(data.paymentUrl, "_blank");
+      }
+
+      showToast(
+        "success",
+        "Subscription created",
+        data.subscription.status === "PENDING"
+          ? "Please complete your payment."
+          : "Your subscription has been activated."
+      );
+    } catch (error: any) {
+      console.error("Error creating subscription:", error);
+      showToast(
+        "error",
+        "Failed to create subscription",
+        error.message || "Please try again."
+      );
+    } finally {
+      setUpdating(false);
     }
-
-    showToast(
-      "success",
-      "Subscription created",
-      data.subscription.status === "PENDING"
-        ? "Please complete your payment."
-        : "Your subscription has been activated."
-    );
-  } catch (error: any) {
-    console.error("Error creating subscription:", error);
-    showToast(
-      "error",
-      "Failed to create subscription",
-      error.message || "Please try again."
-    );
-  } finally {
-    setUpdating(false);
-  }
-};
-
+  };
 
   const handleCancelSubscription = async () => {
     if (!subscription || !user) return;
@@ -147,7 +146,7 @@ export function SubscriptionPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Subscription</h1>
         <p className="text-gray-600 mt-2">
-          Manage your TaskNest subscription and billing
+          Manage your ModTask subscription and billing
         </p>
       </div>
 

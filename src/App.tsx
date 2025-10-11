@@ -17,6 +17,7 @@ import { NotificationsPage } from './components/notifications/NotificationsPage'
 import { SubscriptionPage } from './components/subscription/SubscriptionPage';
 import { ProfilePage } from './components/profile/ProfilePage';
 import { LandingPage } from './components/landing/LandingPage';
+import { Footer } from './components/layout/footer';
 
 function AppContent() {
   const { user } = useAuth();
@@ -95,6 +96,7 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Navbar />
+
               <SubscriptionPage />
             </ProtectedRoute>
           }
@@ -114,6 +116,7 @@ function AppContent() {
           element={<LandingPage />}
         />
       </Routes>
+         <Footer />
     </div>
   );
 }

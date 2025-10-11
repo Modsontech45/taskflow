@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiClient } from '../services/api';
-import { useAuth } from './AuthContext';
-import { Notification } from '../types/notification';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { apiClient } from "../services/api";
+import { useAuth } from "./AuthContext";
+import { Notification } from "../types/notification";
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -9,25 +9,34 @@ interface NotificationContextType {
   loading: boolean;
   refreshNotifications: () => Promise<void>;
   markAsRead: (notificationId: string) => Promise<void>;
-  createNotification: (type: string, title: string, message: string, metadata?: any) => Promise<void>;
+  createNotification: (
+    type: string,
+    title: string,
+    message: string,
+    metadata?: any
+  ) => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | null>(null);
 
-export function NotificationProvider({ children }: { children: React.ReactNode }) {
+export function NotificationProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
 
   const refreshNotifications = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
       const data = await apiClient.getNotifications();
       setNotifications(data || []);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error("Error fetching notifications:", error);
     } finally {
       setLoading(false);
     }
@@ -36,22 +45,32 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const markAsRead = async (notificationId: string) => {
     try {
       await apiClient.markNotificationAsRead(notificationId);
-      setNotifications(prev => 
-        prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
       );
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error("Error marking notification as read:", error);
     }
   };
 
-  const createNotification = async (type: string, title: string, message: string, metadata?: any) => {
+  const createNotification = async (
+    type: string,
+    title: string,
+    message: string,
+    metadata?: any
+  ) => {
     try {
-      const newNotification = await apiClient.createNotification({ type, title, message, metadata });
+      const newNotification = await apiClient.createNotification({
+        type,
+        title,
+        message,
+        metadata,
+      });
       if (newNotification) {
-        setNotifications(prev => [newNotification, ...prev]);
+        setNotifications((prev) => [newNotification, ...prev]);
       }
     } catch (error) {
-      console.error('Error creating notification:', error);
+      console.error("Error creating notification:", error);
     }
   };
 
@@ -61,7 +80,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }, [user]);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = React.useMemo(() => {
+    console.log("Calculating unread count");
+    console.log("Current notifications:", notifications);
+    return notifications.filter((n) => !n.isRead).length;
+  }, [notifications]);
 
   const value: NotificationContextType = {
     notifications,
@@ -82,7 +105,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 export function useNotifications() {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
+    throw new Error(
+      "useNotifications must be used within a NotificationProvider"
+    );
   }
   return context;
 }

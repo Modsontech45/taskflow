@@ -1,24 +1,24 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useToast } from '../ui/Toast';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Card, CardContent } from '../ui/Card';
-import { CheckSquare, Eye, EyeOff } from 'lucide-react';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../ui/Toast";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
+import { Card, CardContent } from "../ui/Card";
+import { CheckSquare, Eye, EyeOff } from "lucide-react";
 
 export function RegisterForm() {
   const { register, loading } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    country: '',
-    phone: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    country: "",
+    phone: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -27,27 +27,27 @@ export function RegisterForm() {
     const newErrors: Record<string, string> = {};
 
     if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
+      newErrors.firstName = "First name is required";
     }
 
     if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
+      newErrors.lastName = "Last name is required";
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = "Email is invalid";
     }
 
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = "Password must be at least 6 characters";
     }
 
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     return newErrors;
@@ -55,7 +55,7 @@ export function RegisterForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const formErrors = validateForm();
     if (Object.keys(formErrors).length > 0) {
       setErrors(formErrors);
@@ -69,26 +69,35 @@ export function RegisterForm() {
         country: registrationData.country || undefined,
         phone: registrationData.phone || undefined,
       });
-      
-      showToast('success', 'Registration successful!', 'Please check your email to verify your account before logging in.');
-      navigate('/login', { 
-        state: { 
-          message: 'Registration successful! Please check your email to verify your account before logging in.',
-          email: formData.email 
-        } 
+
+      showToast(
+        "success",
+        "Registration successful!",
+        "Please check your email to verify your account before logging in."
+      );
+      navigate("/login", {
+        state: {
+          message:
+            "Registration successful! Please check your email to verify your account before logging in.",
+          email: formData.email,
+        },
       });
     } catch (error: any) {
-      console.error('Registration error:', error);
-      showToast('error', 'Registration failed', error.message || 'Please try again.');
-      setErrors({ submit: error.message || 'Registration failed' });
+      console.error("Registration error:", error);
+      showToast(
+        "error",
+        "Registration failed",
+        error.message || "Please try again."
+      );
+      setErrors({ submit: error.message || "Registration failed" });
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
@@ -102,8 +111,10 @@ export function RegisterForm() {
                 <CheckSquare className="w-6 h-6 text-white" />
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Join TaskNest</h1>
-            <p className="text-gray-600 mt-2">Create your cozy space for tasks and celebrations</p>
+            <h1 className="text-2xl font-bold text-gray-900">Join ModTask</h1>
+            <p className="text-gray-600 mt-2">
+              Create your cozy space for tasks and celebrations
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -144,7 +155,7 @@ export function RegisterForm() {
             <div className="relative">
               <Input
                 label="Password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
@@ -157,13 +168,17 @@ export function RegisterForm() {
                 className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
               </button>
             </div>
 
             <Input
               label="Confirm password"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
@@ -208,7 +223,7 @@ export function RegisterForm() {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Already have an account?{' '}
+              Already have an account?{" "}
               <Link
                 to="/login"
                 className="text-blue-600 hover:text-blue-800 font-medium transition-colors"

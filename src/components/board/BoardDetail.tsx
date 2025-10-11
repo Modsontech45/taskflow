@@ -5,6 +5,7 @@ import { apiClient } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotifications } from "../../contexts/NotificationContext";
 import { useToast } from "../ui/Toast";
+import Icon from "../icon.png";
 import {
   Board,
   Task,

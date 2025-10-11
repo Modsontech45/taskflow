@@ -1,6 +1,7 @@
 export interface Notification {
   id: string;
   userId: string;
+  boardId: string;
   type: 'BOARD_CREATED' | 'TASK_CREATED' | 'MEMBER_INVITED' | 'MEMBER_ADDED' | 'TASK_COMPLETED';
   title: string;
   message: string;

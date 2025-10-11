@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useToast } from '../ui/Toast';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Card, CardContent } from '../ui/Card';
-import { CheckSquare, Eye, EyeOff } from 'lucide-react';
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../ui/Toast";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
+import { Card, CardContent } from "../ui/Card";
+import { CheckSquare, Eye, EyeOff } from "lucide-react";
 
 export function LoginForm() {
   const { login, loading } = useAuth();
   const { showToast } = useToast();
   const location = useLocation();
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -21,7 +21,7 @@ export function LoginForm() {
   // Show registration success message if coming from registration
   React.useEffect(() => {
     if (location.state?.message) {
-      showToast('info', 'Account created', location.state.message);
+      showToast("info", "Account created", location.state.message);
     }
   }, [location.state, showToast]);
 
@@ -31,26 +31,35 @@ export function LoginForm() {
 
     try {
       await login(formData);
-      showToast('success', 'Welcome back!', 'You have been successfully logged in.');
+      showToast(
+        "success",
+        "Welcome back!",
+        "You have been successfully logged in."
+      );
     } catch (error: any) {
-      console.error('Login error:', error);
-      let errorMessage = error.message || 'Please check your credentials and try again.';
-      
+      console.error("Login error:", error);
+      let errorMessage =
+        error.message || "Please check your credentials and try again.";
+
       // Handle specific error cases
-      if (error.message?.includes('email not verified') || error.message?.includes('verify')) {
-        errorMessage = 'Please verify your email address before logging in. Check your inbox for the verification link.';
+      if (
+        error.message?.includes("email not verified") ||
+        error.message?.includes("verify")
+      ) {
+        errorMessage =
+          "Please verify your email address before logging in. Check your inbox for the verification link.";
       }
-      
-      showToast('error', 'Login failed', errorMessage);
-      setErrors({ submit: error.message || 'Login failed' });
+
+      showToast("error", "Login failed", errorMessage);
+      setErrors({ submit: error.message || "Login failed" });
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
@@ -64,8 +73,12 @@ export function LoginForm() {
                 <CheckSquare className="w-6 h-6 text-white" />
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Welcome back to TaskNest</h1>
-            <p className="text-gray-600 mt-2">Sign in to your cozy task management space</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Welcome back to ModTask
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Sign in to your cozy task management space
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -83,7 +96,7 @@ export function LoginForm() {
             <div className="relative">
               <Input
                 label="Password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
@@ -96,7 +109,11 @@ export function LoginForm() {
                 className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
               </button>
             </div>
 
@@ -124,7 +141,7 @@ export function LoginForm() {
               Forgot your password?
             </Link>
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+              Don't have an account?{" "}
               <Link
                 to="/register"
                 className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
