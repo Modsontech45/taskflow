@@ -309,9 +309,13 @@ export function BoardDetail() {
             <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold">{board.name}</h1>
               <p className="text-xs text-gray-500 ">
-                Author: 
+                Author:
                 <span className="text-sm text-green-700 font-medium ml-1">
-                  {board.author.split("@")[0]}
+                  {board.author
+                    ? board.author.split("@")[0] === user?.email?.split("@")[0]
+                      ? "You"
+                      : board.author.split("@")[0]
+                    : "Unknown"}
                 </span>
               </p>
             </div>
@@ -394,9 +398,11 @@ export function BoardDetail() {
                                 <span>
                                   Author :{" "}
                                   <span className="text-green-700 font-medium">
-                                    {task.author.split("@")[0]}
+                                    {task.author ? task.author.split("@")[0] === user?.email?.split("@")[0]
+                                      ? "You"
+                                      : task.author.split("@")[0]
+                                    : "Unknown"}
                                   </span>
-
                                 </span>
                                 {task.updatedBy !== null ? (
                                   <span>
@@ -406,7 +412,6 @@ export function BoardDetail() {
                                     </span>
                                   </span>
                                 ) : null}
-
                               </div>
                             </div>
                             <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition">
@@ -465,10 +470,7 @@ export function BoardDetail() {
                         {task.updatedBy && (
                           <>
                             {" "}
-                            •{" "}
-                            <span>
-                                Completed by :
-                              </span>
+                            • <span>Completed by :</span>
                             <span className="text-green-700 font-medium">
                               {task.updatedBy?.split("@")[0]}
                             </span>
