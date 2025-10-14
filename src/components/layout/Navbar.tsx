@@ -76,7 +76,7 @@ export function Navbar() {
                   <Icon className="w-4 h-4" />
                   <span>{item.name}</span>
                   {item.badge && item.badge > 0 && (
-                    <span className="bg-red-500 text-black text-xs rounded-full px-2 py-0.5 min-w-[1.25rem] h-5 flex items-center justify-center">
+                    <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-0.5 min-w-[1.25rem] h-5 flex items-center justify-center">
                       {item.badge > 99 ? "99+" : item.badge}
                     </span>
                   )}

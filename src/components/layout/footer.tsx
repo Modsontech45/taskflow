@@ -51,11 +51,11 @@ export function Footer() {
         <div>
           <h3 className="text-white font-semibold mb-4">Contact Us</h3>
           <p className="text-gray-700 text-sm">Email: support@modlogiq.com</p>
-          <p className="text-gray-700 text-sm">Phone: +123 456 7890</p>
+          <p className="text-gray-700 text-sm">Phone: +228 93946043</p>
           <div className="flex space-x-4 mt-4">
             <a href="#" className="hover:text-white transition-colors">Facebook</a>
             <a href="#" className="hover:text-white transition-colors">Twitter</a>
-            <a href="#" className="hover:text-white transition-colors">LinkedIn</a>
+            <a href="https://www.linkedin.com/in/modson-tande-4842871b2/" className="hover:text-blue-500 transition-colors">LinkedIn</a>
           </div>
         </div>
 

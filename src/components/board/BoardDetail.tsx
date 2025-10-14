@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from "react";
-
 import { useParams, useNavigate } from "react-router-dom";
 import { apiClient } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotifications } from "../../contexts/NotificationContext";
 import { useToast } from "../ui/Toast";
-import Icon from "../icon.png";
 import {
   Board,
   Task,
@@ -27,11 +25,9 @@ import {
   Edit,
   Trash2,
   ArrowLeft,
-  
-    Award
-  
+  Award,
 } from "lucide-react";
-import { formatISO, addDays, format, parseISO } from "date-fns";
+import { formatISO, addDays, format, parseISO, isBefore, differenceInMinutes } from "date-fns";
 
 export function BoardDetail() {
   const { boardId } = useParams<{ boardId: string }>();
@@ -59,10 +55,15 @@ export function BoardDetail() {
   );
   const [submittingTask, setSubmittingTask] = useState(false);
 
+  // State to trigger time-based re-renders every minute
+  const [now, setNow] = useState(new Date());
   useEffect(() => {
-    if (boardId) {
-      loadBoard();
-    }
+    const interval = setInterval(() => setNow(new Date()), 60000); // update every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (boardId) loadBoard();
   }, [boardId]);
 
   const loadBoard = async () => {
@@ -78,11 +79,7 @@ export function BoardDetail() {
       setTasks(tasksData);
     } catch (error: any) {
       console.error("Error loading board:", error);
-      showToast(
-        "error",
-        "Failed to load board",
-        error.message || "Please try again."
-      );
+      showToast("error", "Failed to load board", error.message || "Please try again.");
       navigate("/boards");
     } finally {
       setLoading(false);
@@ -94,8 +91,8 @@ export function BoardDetail() {
     setTaskFormData({
       title: "",
       notes: "",
-      startAt: formatISO(new Date()), // full ISO string
-      endAt: formatISO(addDays(new Date(), 1)), // +1 day
+      startAt: formatISO(new Date()),
+      endAt: formatISO(addDays(new Date(), 1)),
     });
     setTaskFormErrors({});
     setTaskModalOpen(true);
@@ -115,25 +112,14 @@ export function BoardDetail() {
 
   const validateTaskForm = () => {
     const errors: Record<string, string> = {};
-
-    if (!taskFormData.title.trim()) {
-      errors.title = "Title is required";
-    }
-
-    if (!taskFormData.startAt) {
-      errors.startAt = "Start date is required";
-    }
-
-    if (!taskFormData.endAt) {
-      errors.endAt = "End date is required";
-    }
-
+    if (!taskFormData.title.trim()) errors.title = "Title is required";
+    if (!taskFormData.startAt) errors.startAt = "Start date is required";
+    if (!taskFormData.endAt) errors.endAt = "End date is required";
     if (taskFormData.startAt && taskFormData.endAt) {
       if (new Date(taskFormData.startAt) >= new Date(taskFormData.endAt)) {
         errors.endAt = "End date must be after start date";
       }
     }
-
     return errors;
   };
 
@@ -151,7 +137,6 @@ export function BoardDetail() {
     try {
       const startAtISO = new Date(taskFormData.startAt).toISOString();
       const endAtISO = new Date(taskFormData.endAt).toISOString();
-
       if (!boardId) throw new Error("Board ID is missing");
 
       if (editingTask) {
@@ -162,24 +147,9 @@ export function BoardDetail() {
           endAt: endAtISO,
         };
 
-        // Pass both boardId and taskId correctly
-        const updatedTask = await apiClient.updateTask(
-          boardId,
-          editingTask.id,
-          updateData
-        );
-
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.id === editingTask.id ? { ...t, ...updatedTask } : t
-          )
-        );
-
-        showToast(
-          "success",
-          "Task updated",
-          "The task has been updated successfully."
-        );
+        const updatedTask = await apiClient.updateTask(boardId, editingTask.id, updateData);
+        setTasks((prev) => prev.map((t) => (t.id === editingTask.id ? { ...t, ...updatedTask } : t)));
+        showToast("success", "Task updated", "The task has been updated successfully.");
       } else {
         const createData: CreateTaskRequest = {
           title: taskFormData.title.trim(),
@@ -190,13 +160,8 @@ export function BoardDetail() {
 
         const newTask = await apiClient.createTask(boardId, createData);
         setTasks((prev) => [newTask, ...prev]);
-        showToast(
-          "success",
-          "Task created",
-          "The task has been created successfully."
-        );
+        showToast("success", "Task created", "The task has been created successfully.");
 
-        // Create notification for task creation
         await createNotification(
           "TASK_CREATED",
           "New task created",
@@ -209,133 +174,74 @@ export function BoardDetail() {
       setEditingTask(null);
     } catch (error: any) {
       console.error("Error saving task:", error);
-      showToast(
-        "error",
-        "Failed to save task",
-        error.message || "Please try again."
-      );
+      showToast("error", "Failed to save task", error.message || "Please try again.");
     } finally {
       setSubmittingTask(false);
     }
   };
 
   const handleToggleTask = async (task: Task) => {
-    if (!boardId) {
-      console.error("No boardId found for toggling task");
-      return;
-    }
+    if (!boardId) return;
 
     try {
-      const updatedTask = await apiClient.toggleTask(boardId, task.id);
-
+      await apiClient.toggleTask(boardId, task.id);
       setTasks((prev) =>
         prev.map((t) => (t.id === task.id ? { ...t, isDone: !t.isDone } : t))
       );
-
-      showToast(
-        "success",
-        task.isDone ? "Task reopened" : "Task completed",
-        ""
-      );
+      showToast("success", task.isDone ? "Task reopened" : "Task completed", "");
     } catch (error: any) {
       console.error("Error toggling task:", error);
-      showToast(
-        "error",
-        "Failed to update task",
-        error.message || "Please try again."
-      );
+      showToast("error", "Failed to update task", error.message || "Please try again.");
     }
   };
 
   const handleDeleteTask = async (task: Task) => {
-    if (!window.confirm(`Are you sure you want to delete "${task.title}"?`))
-      return;
-
+    if (!window.confirm(`Are you sure you want to delete "${task.title}"?`)) return;
     try {
-      await apiClient.deleteTask(boardId!, task.id); // pass boardId here
+      await apiClient.deleteTask(boardId!, task.id);
       setTasks((prev) => prev.filter((t) => t.id !== task.id));
-      showToast(
-        "success",
-        "Task deleted",
-        "The task has been deleted successfully."
-      );
+      showToast("success", "Task deleted", "The task has been deleted successfully.");
     } catch (error: any) {
       console.error("Error deleting task:", error);
-      showToast(
-        "error",
-        "Failed to delete task",
-        error.message || "Please try again."
-      );
+      showToast("error", "Failed to delete task", error.message || "Please try again.");
     }
   };
 
   const handleMembersUpdate = (updatedMembers: any[]) => {
-    if (board) {
-      setBoard({ ...board, members: updatedMembers });
-    }
+    if (board) setBoard({ ...board, members: updatedMembers });
   };
 
-  const isOwner = board?.ownerId === user?.id;
   const completedTasks = tasks.filter((t) => t.isDone);
   const pendingTasks = tasks.filter((t) => !t.isDone);
 
-if (loading) {
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col items-center justify-center min-h-[60vh]">
-      {/* Spinner */}
-      <div className="flex items-center justify-center space-x-2 mb-8">
-        <svg
-          className="animate-spin h-10 w-10 text-blue-600"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          ></circle>
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-          ></path>
-        </svg>
-        <span className="text-lg font-medium text-gray-700">Loading...</span>
-      </div>
+  const getDueAlert = (endAt: string) => {
+    const dueDate = parseISO(endAt);
+    const diff = differenceInMinutes(dueDate, now);
 
-      {/* Skeleton blocks */}
-      <div className="animate-pulse space-y-8 w-full">
-        <div className="h-8 bg-gray-200 rounded w-64 mx-auto"></div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 bg-gray-200 rounded-xl"></div>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="h-80 bg-gray-200 rounded-xl"></div>
-          <div className="h-80 bg-gray-200 rounded-xl"></div>
-        </div>
+    if (isBefore(dueDate, now))
+      return { message: "Overdue", color: "text-red-600 font-semibold" };
+    if (diff <= 60)
+      return { message: "Due soon (within 1h)", color: "text-orange-500 font-semibold" };
+    if (diff <= 1440)
+      return { message: "Due today", color: "text-yellow-600 font-semibold" };
+    return { message: "On track", color: "text-green-600 font-semibold" };
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <span className="text-gray-600 text-lg">Loading board...</span>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   if (!board) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900">Board not found</h2>
-          <p className="text-gray-600 mt-2">
-            The board you're looking for doesn't exist.
-          </p>
-          <Button onClick={() => navigate("/boards")} className="mt-4">
-            Back to Boards
-          </Button>
-        </div>
+      <div className="max-w-7xl mx-auto py-8 text-center">
+        <h2 className="text-2xl font-bold text-gray-900">Board not found</h2>
+        <Button onClick={() => navigate("/boards")} className="mt-4">
+          Back to Boards
+        </Button>
       </div>
     );
   }
@@ -343,179 +249,97 @@ if (loading) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
-  <div className="flex items-center space-x-4">
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => navigate("/boards")}
-      className="text-gray-600"
-    >
-      <ArrowLeft className="w-8 h-4 mr-1" />
-      Back to Boards
-    </Button>
-    <div>
-      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{board.name}</h1>
-      <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-600">
-        <div className="flex items-center">
-          <Users className="w-4 h-4 mr-1" />
-          <span>{board.members?.length || 1} members</span>
+      <div className="flex flex-col sm:flex-row justify-between mb-8">
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/boards")}>
+            <ArrowLeft className="w-4 h-4 mr-1" /> Back
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">{board.name}</h1>
+            <p className="text-sm text-gray-500">
+              {tasks.length} tasks • {board.members?.length || 1} members
+            </p>
+          </div>
         </div>
-        <div className="flex items-center">
-          <Calendar className="w-4 h-4 mr-1" />
-          <span>{tasks.length} tasks</span>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setShowMemberManagement(!showMemberManagement)}
+          >
+            <Users className="w-4 h-4 mr-2" /> Manage Members
+          </Button>
+          <Button onClick={handleCreateTask}>
+            <Plus className="w-4 h-4 mr-2" /> Add Task
+          </Button>
         </div>
       </div>
-    </div>
-  </div>
-  <div className="flex flex-wrap gap-3">
-    <Button
-      variant="outline"
-      onClick={() => setShowMemberManagement(!showMemberManagement)}
-      className="flex-1 sm:flex-none"
-    >
-      <Users className="w-4 h-4 mr-2" />
-      Manage Members
-    </Button>
-    <Button onClick={handleCreateTask} className="flex-1 sm:flex-none">
-      <Plus className="w-4 h-4 mr-2" />
-      Add Task
-    </Button>
-  </div>
-</div>
 
-
-      {/* Member Management */}
       {showMemberManagement && (
         <div className="mb-8">
-          <BoardMemberManagement
-            board={board}
-            onMembersUpdate={handleMembersUpdate}
-          />
+          <BoardMemberManagement board={board} onMembersUpdate={handleMembersUpdate} />
         </div>
       )}
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <Calendar className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Tasks</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {tasks.length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-xl">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Completed</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {completedTasks.length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-amber-100 rounded-xl">
-                <Clock className="w-6 h-6 text-amber-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {pendingTasks.length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Tasks */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Pending Tasks */}
         <Card>
           <CardHeader>
-            <h2 className="text-xl font-semibold text-gray-900">
-              Pending Tasks
-            </h2>
+            <h2 className="text-xl font-semibold">Pending Tasks</h2>
           </CardHeader>
           <CardContent>
             {pendingTasks.length === 0 ? (
-              <div className="text-center py-8">
-                <Circle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">No pending tasks</p>
-                <Button onClick={handleCreateTask} size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add task
-                </Button>
-              </div>
+              <p className="text-gray-500 text-center py-8">No pending tasks</p>
             ) : (
               <div className="space-y-3">
-                {pendingTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="p-4 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors group"
-                  >
-                    <div className="flex items-start space-x-3">
-                      <button
-                        onClick={() => handleToggleTask(task)}
-                        className="mt-0.5 text-gray-300 hover:text-green-500 transition-colors"
-                      >
-                        <Circle className="w-5 h-5" />
-                      </button>
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-medium text-gray-900">
-                              {task.title}
-                            </h3>
-                            {task.notes && (
-                              <p className="text-sm text-gray-600 mt-1">
-                                {task.notes}
-                              </p>
-                            )}
-                            <div className="flex items-center text-xs text-gray-500 mt-2 space-x-4">
-                              <span>
-                                Due:{" "}
-                                {format(parseISO(task.endAt), "MMM d, yyyy")}
-                              </span>
+                {pendingTasks.map((task) => {
+                  const alert = getDueAlert(task.endAt);
+                  return (
+                    <div
+                      key={task.id}
+                      className="p-4 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors group"
+                    >
+                      <div className="flex items-start space-x-3">
+                        <button
+                          onClick={() => handleToggleTask(task)}
+                          className="mt-0.5 text-gray-300 hover:text-green-500"
+                        >
+                          <Circle className="w-5 h-5" />
+                        </button>
+                        <div className="flex-1">
+                          <div className="flex justify-between">
+                            <div>
+                              <h3 className="font-medium text-gray-900">{task.title}</h3>
+                              {task.notes && (
+                                <p className="text-sm text-gray-600 mt-1">{task.notes}</p>
+                              )}
+                              <div className="flex items-center text-xs text-gray-800 mt-2 space-x-4">
+                                <span>
+                                  Due: {format(parseISO(task.endAt), "MMM d, yyyy, h:mm a")}
+                                </span>
+                                <span className={alert.color}>{alert.message}</span>
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => handleEditTask(task)}
-                              className="p-1 text-gray-400 hover:text-blue-600 rounded"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTask(task)}
-                              className="p-1 text-gray-400 hover:text-red-600 rounded"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition">
+                              <button
+                                onClick={() => handleEditTask(task)}
+                                className="p-1 text-gray-400 hover:text-blue-600"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTask(task)}
+                                className="p-1 text-gray-400 hover:text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -524,16 +348,11 @@ if (loading) {
         {/* Completed Tasks */}
         <Card>
           <CardHeader>
-            <h2 className="text-xl font-semibold text-gray-900">
-              Completed Tasks
-            </h2>
+            <h2 className="text-xl font-semibold">Completed Tasks</h2>
           </CardHeader>
           <CardContent>
             {completedTasks.length === 0 ? (
-              <div className="text-center py-8">
-                < Award className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No completed tasks yet</p>
-              </div>
+              <p className="text-gray-500 text-center py-8">No completed tasks</p>
             ) : (
               <div className="space-y-3">
                 {completedTasks.map((task) => (
@@ -541,37 +360,22 @@ if (loading) {
                     key={task.id}
                     className="p-4 rounded-xl border border-gray-100 bg-green-50 group flex items-start space-x-3"
                   >
-                    {/* Congratulatory Icon */}
-                    < Award className="w-6 h-6 text-green-600 mt-1 flex-shrink-0" />
-
+                    <Award className="w-6 h-6 text-green-600 mt-1 flex-shrink-0" />
                     <div className="flex-1">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-medium text-green-700">
-                            {task.title}
-                          </h3>
-                          {task.notes && (
-                            <p className="text-gray-900 mt-1">{task.notes}</p>
-                          )}
-                          <div className="flex items-center text-xs text-gray-500 mt-2 space-x-4">
-                            <span>
-                              Completed:{" "}
-                              {format(parseISO(task.updatedAt), "MMM d, yyyy")}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => handleDeleteTask(task)}
-                            className="p-1 text-gray-400 hover:text-red-600 rounded"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
+                      <h3 className="font-medium text-green-700">{task.title}</h3>
+                      {task.notes && (
+                        <p className="text-gray-900 mt-1">{task.notes}</p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-2">
+                        Completed: {format(parseISO(task.updatedAt), "MMM d, yyyy")}
+                      </p>
                     </div>
+                    <button
+                      onClick={() => handleDeleteTask(task)}
+                      className="p-1 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -600,10 +404,9 @@ if (loading) {
             error={taskFormErrors.title}
             placeholder="Enter task title..."
             required
-            autoFocus
           />
 
-          <div className="space-y-1">
+          <div>
             <label className="block text-sm font-medium text-gray-700">
               Notes (optional)
             </label>
@@ -612,9 +415,9 @@ if (loading) {
               onChange={(e) =>
                 setTaskFormData((prev) => ({ ...prev, notes: e.target.value }))
               }
-              className="w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               rows={3}
-              placeholder="Add any additional notes or description..."
+              placeholder="Add additional notes..."
             />
           </div>
 
@@ -624,15 +427,11 @@ if (loading) {
               type="datetime-local"
               value={taskFormData.startAt}
               onChange={(e) =>
-                setTaskFormData((prev) => ({
-                  ...prev,
-                  startAt: e.target.value,
-                }))
+                setTaskFormData((prev) => ({ ...prev, startAt: e.target.value }))
               }
               error={taskFormErrors.startAt}
               required
             />
-
             <Input
               label="End date & time"
               type="datetime-local"
