@@ -7,6 +7,7 @@ export interface Board {
   members?: BoardMember[];
   tasks?: Task[];
   activeTasks?: number; // 👈 add this
+  author: '';
 }
 
 
@@ -33,6 +34,8 @@ export interface Task {
   createdById: string;
   createdAt: string;
   updatedAt: string;
+  author: '';
+  updatedBy: '';
   createdBy?: {
     firstName: string;
     lastName: string;
