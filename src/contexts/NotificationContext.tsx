@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { apiClient } from "../services/api";
 import { useAuth } from "./AuthContext";
 import { Notification } from "../types/notification";
@@ -19,18 +19,15 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | null>(null);
 
-export function NotificationProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
+  const ws = useRef<WebSocket | null>(null);
 
+  // ---------------- Refresh notifications from API ----------------
   const refreshNotifications = async () => {
     if (!user) return;
-
     setLoading(true);
     try {
       const data = await apiClient.getNotifications();
@@ -42,6 +39,7 @@ export function NotificationProvider({
     }
   };
 
+  // ---------------- Mark as read ----------------
   const markAsRead = async (notificationId: string) => {
     try {
       await apiClient.markNotificationAsRead(notificationId);
@@ -53,6 +51,7 @@ export function NotificationProvider({
     }
   };
 
+  // ---------------- Create notification ----------------
   const createNotification = async (
     type: string,
     title: string,
@@ -74,17 +73,40 @@ export function NotificationProvider({
     }
   };
 
+  // ---------------- WebSocket connection ----------------
   useEffect(() => {
-    if (user) {
-      refreshNotifications();
-    }
+    if (!user) return;
+
+    // Replace with your backend WebSocket URL
+    ws.current = new WebSocket(`ws://localhost:4000/notifications?userId=${user.id}`);
+
+    ws.current.onopen = () => {
+      console.log("WebSocket connected for notifications");
+    };
+
+    ws.current.onmessage = (event) => {
+      try {
+        const newNotification: Notification = JSON.parse(event.data);
+        setNotifications((prev) => [newNotification, ...prev]);
+      } catch (err) {
+        console.error("Error parsing WebSocket message:", err);
+      }
+    };
+
+    ws.current.onclose = () => {
+      console.log("WebSocket disconnected");
+    };
+
+    ws.current.onerror = (err) => {
+      console.error("WebSocket error:", err);
+    };
+
+    return () => {
+      ws.current?.close();
+    };
   }, [user]);
 
-  const unreadCount = React.useMemo(() => {
-    console.log("Calculating unread count");
-    console.log("Current notifications:", notifications);
-    return notifications.filter((n) => !n.isRead).length;
-  }, [notifications]);
+  const unreadCount = React.useMemo(() => notifications.filter((n) => !n.isRead).length, [notifications]);
 
   const value: NotificationContextType = {
     notifications,
@@ -95,19 +117,11 @@ export function NotificationProvider({
     createNotification,
   };
 
-  return (
-    <NotificationContext.Provider value={value}>
-      {children}
-    </NotificationContext.Provider>
-  );
+  return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
 }
 
 export function useNotifications() {
   const context = useContext(NotificationContext);
-  if (!context) {
-    throw new Error(
-      "useNotifications must be used within a NotificationProvider"
-    );
-  }
+  if (!context) throw new Error("useNotifications must be used within a NotificationProvider");
   return context;
 }

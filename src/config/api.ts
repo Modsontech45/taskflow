@@ -2,8 +2,8 @@
 
 // API Configuration
 export const API_CONFIG = {
-  // BASE_URL: 'http://localhost:5000/api',
-  BASE_URL: 'https://taskflowbackend-omega.vercel.app/api',
+  BASE_URL: 'http://localhost:5000/api',
+  // BASE_URL: 'https://taskflowbackend-omega.vercel.app/api',
   TIMEOUT: 10000,
   RETRY_ATTEMPTS: 3,
 } as const;
@@ -49,6 +49,18 @@ BOARD_TASKS: (boardId: string) => `/boards/${boardId}/tasks`,
 
   // Profile
   PROFILE: (userId: string) => `/profile/${userId}`,
+
+   USERS_SEARCH: '/messages/users/search',
+  CONVERSATIONS_CREATE: '/messages/conversations',
+  CONVERSATIONS_ALL: '/messages/conversations',
+  CONVERSATION_MESSAGES: (convId: string) => `/messages/conversations/${convId}/messages`,
+  // ...other endpoints
+
+  FRIEND_REQUESTS: "/friends/requests",
+FRIEND_REQUEST_DETAIL: (id: string) => `/friends/requests/${id}`,
+USER_FRIENDS: (id: string) => `/friends/${id}`,
+FRIEND_STATUS: (targetId: string) => `/friends/status/${targetId}`,
+FRIEND_RESPOND: (requestId: string) => `/friends/respond/${requestId}`,
 } as const;
 
 

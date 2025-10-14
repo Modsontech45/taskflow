@@ -18,7 +18,8 @@ import { SubscriptionPage } from './components/subscription/SubscriptionPage';
 import { ProfilePage } from './components/profile/ProfilePage';
 import { LandingPage } from './components/landing/LandingPage';
 import { Footer } from './components/layout/footer';
-
+import { About } from './components/about/about';
+import { Messages } from './components/message/message';
 function AppContent() {
   const { user } = useAuth();
 
@@ -61,6 +62,24 @@ function AppContent() {
             <ProtectedRoute>
               <Navbar />
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/about"
+          element={
+            <ProtectedRoute>
+              <Navbar />
+              <About />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/messages"
+          element={
+            <ProtectedRoute>
+              <Navbar />
+              <Messages />
             </ProtectedRoute>
           }
         />

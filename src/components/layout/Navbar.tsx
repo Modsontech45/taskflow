@@ -34,7 +34,8 @@ export function Navbar() {
     },
     { name: "Subscription", href: "/subscription", icon: CreditCard },
     { name: "Profile", href: "/profile", icon: User },
-    { name: "About", href: "/", icon: FileText },
+    { name: "About", href: "/about", icon: FileText },
+    { name: "Messages", href: "/messages", icon: CheckSquare },
   ];
 
   const isActiveLink = (href: string) => {
