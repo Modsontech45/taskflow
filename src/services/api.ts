@@ -251,6 +251,24 @@ export class ApiClient {
     });
   }
 
+  // ------------------- Task Comments -------------------
+  async getTaskComments(boardId: string, taskId: string) {
+    return this.request(API_ENDPOINTS.TASK_COMMENTS(boardId, taskId));
+  }
+
+  async addTaskComment(boardId: string, taskId: string, content: string) {
+    return this.request(API_ENDPOINTS.TASK_COMMENTS(boardId, taskId), {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  async deleteTaskComment(boardId: string, taskId: string, commentId: string) {
+    return this.request(API_ENDPOINTS.TASK_COMMENT_DELETE(boardId, taskId, commentId), {
+      method: "DELETE",
+    });
+  }
+
   // ------------------- Friends -------------------
   /**
    * Send a friend request to another user.

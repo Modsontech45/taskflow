@@ -56,6 +56,10 @@ BOARD_TASKS: (boardId: string) => `/boards/${boardId}/tasks`,
   CONVERSATION_MESSAGES: (convId: string) => `/messages/conversations/${convId}/messages`,
   // ...other endpoints
 
+  // Task Comments
+  TASK_COMMENTS: (boardId: string, taskId: string) => `/boards/${boardId}/tasks/${taskId}/comments`,
+  TASK_COMMENT_DELETE: (boardId: string, taskId: string, commentId: string) => `/boards/${boardId}/tasks/${taskId}/comments/${commentId}`,
+
   FRIEND_REQUESTS: "/friends/requests",
 FRIEND_REQUEST_DETAIL: (id: string) => `/friends/requests/${id}`,
 USER_FRIENDS: (id: string) => `/friends/${id}`,

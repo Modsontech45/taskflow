@@ -16,6 +16,7 @@ import { BoardDetail } from './components/board/BoardDetail';
 import { NotificationsPage } from './components/notifications/NotificationsPage';
 import { SubscriptionPage } from './components/subscription/SubscriptionPage';
 import { ProfilePage } from './components/profile/ProfilePage';
+import { TaskDetailPage } from './components/board/TaskDetailPage';
 import { LandingPage } from './components/landing/LandingPage';
 import { Footer } from './components/layout/footer';
 import { About } from './components/about/about';
@@ -98,6 +99,15 @@ function AppContent() {
             <ProtectedRoute>
               <Navbar />
               <BoardDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/boards/:boardId/tasks/:taskId"
+          element={
+            <ProtectedRoute>
+              <Navbar />
+              <TaskDetailPage />
             </ProtectedRoute>
           }
         />

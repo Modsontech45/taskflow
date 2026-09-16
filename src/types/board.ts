@@ -41,6 +41,18 @@ export interface Task {
   };
 }
 
+export interface TaskComment {
+  id: string;
+  taskId?: string;
+  authorId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateBoardRequest {
   name: string;
 }
