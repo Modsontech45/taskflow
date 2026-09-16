@@ -32,7 +32,6 @@ export function BoardList() {
   useEffect(() => {
     loadBoards();
   }, []);
-  const boardAUTHOR = boards[0]?.author || "Unknown"; // Placeholder for the current user's name
   const loadBoards = async () => {
     setLoading(true);
     try {
@@ -219,11 +218,10 @@ export function BoardList() {
                           <span className="flex items-center text-sm text-gray-500 space-x-1">
                             <Crown className="w-4 h-4 text-yellow-500" />
                             <span>
-                              {board.author
-                                ? board.author.split("@")[0] ===
-                                  user?.email?.split("@")[0]
-                                  ? "You"
-                                  : board.author.split("@")[0]
+                              {board.ownerId === user?.id
+                                ? "You"
+                                : board.ownerFirstName
+                                ? `${board.ownerFirstName} ${board.ownerLastName ?? ""}`.trim()
                                 : "Unknown"}{" "}
                               (Owner)
                             </span>

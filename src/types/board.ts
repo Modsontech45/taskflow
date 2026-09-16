@@ -2,12 +2,13 @@ export interface Board {
   id: string;
   name: string;
   ownerId: string;
+  ownerFirstName?: string;
+  ownerLastName?: string;
   createdAt: string;
   updatedAt: string;
   members?: BoardMember[];
   tasks?: Task[];
-  activeTasks?: number; // 👈 add this
-  author: '';
+  activeTasks?: number;
 }
 
 
@@ -34,8 +35,6 @@ export interface Task {
   createdById: string;
   createdAt: string;
   updatedAt: string;
-  author: '';
-  updatedBy: '';
   createdBy?: {
     firstName: string;
     lastName: string;
