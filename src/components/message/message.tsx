@@ -13,6 +13,7 @@ interface User {
   lastName?: string;
   email?: string;
   friendStatus?: "none" | "pending" | "requested" | "friends";
+  friendRequestId?: string;
 }
 
 interface Message {
@@ -58,10 +59,14 @@ export function Messages() {
       setIsSearching(true);
       try {
         const users = await apiClient.searchUsers(searchQuery);
+        const requests: any = await apiClient.getFriendRequests();
+        const requestMap: Record<string, string> = {};
+        (requests?.requests || []).forEach((r: any) => { requestMap[r.senderId] = r.id; });
+
         const withStatus = await Promise.all(
           users.map(async (u: User) => {
             const status = await apiClient.getFriendStatus(u.id);
-            return { ...u, friendStatus: status };
+            return { ...u, friendStatus: status, friendRequestId: requestMap[u.id] };
           })
         );
         setSearchResults(withStatus);
@@ -156,7 +161,7 @@ export function Messages() {
 
   const respondToRequest = async (requestId: string, accept: boolean) => {
     try {
-      await apiClient.respondToFriendRequest(requestId, accept);
+      await apiClient.respondToFriendRequest(requestId, accept ? "accept" : "reject");
       setSearchResults((prev) =>
         prev.map((u) => (u.id === requestId ? { ...u, friendStatus: "friends" } : u))
       );
@@ -258,19 +263,19 @@ export function Messages() {
                           <span className="text-xs text-gray-400">Pending</span>
                         )}
 
-                        {u.friendStatus === "pending" && (
+                        {u.friendStatus === "pending" && u.friendRequestId && (
                           <div className="flex gap-1">
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => respondToRequest(u.id, true)}
+                              onClick={() => respondToRequest(u.friendRequestId!, true)}
                             >
                               <Check className="w-4 h-4" />
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => respondToRequest(u.id, false)}
+                              onClick={() => respondToRequest(u.friendRequestId!, false)}
                             >
                               <X className="w-4 h-4" />
                             </Button>

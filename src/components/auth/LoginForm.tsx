@@ -42,10 +42,7 @@ export function LoginForm() {
         error.message || "Please check your credentials and try again.";
 
       // Handle specific error cases
-      if (
-        error.message?.includes("email not verified") ||
-        error.message?.includes("verify")
-      ) {
+      if (error.message?.toLowerCase().includes("not verified")) {
         errorMessage =
           "Please verify your email address before logging in. Check your inbox for the verification link.";
       }
