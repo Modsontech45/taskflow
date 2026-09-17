@@ -7,7 +7,7 @@ import { Board, Task } from "../../types/board";
 import { Card, CardContent, CardHeader } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Plus, Users, Calendar, CheckCircle2, Clock, Folder, TrendingUp, AlertCircle } from "lucide-react";
-import { format, isToday, isTomorrow, parseISO, subDays, startOfDay } from "date-fns";
+import { format, isToday, isTomorrow, parseISO, subDays, startOfDay, addDays } from "date-fns";
 import {
   ResponsiveContainer,
   PieChart, Pie, Cell, Tooltip, Legend,
@@ -55,9 +55,12 @@ export function Dashboard() {
       }
 
       setBoards(allBoards);
+      const upcomingCutoff = new Date().getHours() >= 22
+        ? startOfDay(addDays(new Date(), 1))
+        : startOfDay(new Date());
       setUpcomingTasks(
         allBoards.flatMap(b => b.tasks ?? [])
-          .filter(t => t.status === "pending")
+          .filter(t => !t.isDone && startOfDay(parseISO(t.startAt)) <= upcomingCutoff)
           .sort((a, b) => new Date(a.endAt).getTime() - new Date(b.endAt).getTime())
           .slice(0, 5)
       );
@@ -69,8 +72,16 @@ export function Dashboard() {
   };
 
   // ---- Derived data for charts ----
-  const allTasks = boards.flatMap(b => b.tasks ?? []);
   const now = new Date();
+
+  // Tasks for tomorrow are hidden until 10pm today (so you don't see tomorrow's recurring tasks bloating stats)
+  const taskCutoff = now.getHours() >= 22
+    ? startOfDay(addDays(now, 1))   // after 10pm: reveal tomorrow
+    : startOfDay(now);              // before 10pm: today and earlier only
+
+  const allTasks = boards
+    .flatMap(b => b.tasks ?? [])
+    .filter(t => startOfDay(parseISO(t.startAt)) <= taskCutoff);
 
   const doneTasks    = allTasks.filter(t => t.isDone);
   const pendingTasks = allTasks.filter(t => !t.isDone && parseISO(t.endAt) >= now);
