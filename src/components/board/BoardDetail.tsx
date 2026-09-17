@@ -317,6 +317,12 @@ export function BoardDetail() {
   const allPending   = dateTasks.filter((t) => !t.isDone);
   const allCompleted = dateTasks.filter((t) => t.isDone);
   const overdueTasks = allPending.filter((t) => isAfter(now, addMinutes(parseISO(t.endAt), 30)));
+
+  // The single next-up task: earliest upcoming (startAt > now) among pending
+  const nextUpTask = allPending
+    .filter((t) => isAfter(parseISO(t.startAt), now))
+    .sort((a, b) => parseISO(a.startAt).getTime() - parseISO(b.startAt).getTime())[0];
+  const nextUpTaskId = nextUpTask?.id ?? null;
   const completionPct = dateTasks.length === 0 ? 0 : Math.round((allCompleted.length / dateTasks.length) * 100);
 
   const filteredPending = allPending.filter((t) =>
@@ -587,21 +593,23 @@ export function BoardDetail() {
             ) : (
               <div className="space-y-2">
                 {filteredPending.map((task) => {
-                  const timeState = getTaskTimeState(task);
-                  const priority  = PRIORITY_CFG[task.priority || "MEDIUM"];
-                  const isOpen    = openComments[task.id];
-                  const comments  = taskComments[task.id] || [];
-                  const author    = taskAuthorDisplay(task);
-                  const toggling  = togglingTask[task.id];
+                  const timeState  = getTaskTimeState(task);
+                  const priority   = PRIORITY_CFG[task.priority || "MEDIUM"];
+                  const isOpen     = openComments[task.id];
+                  const comments   = taskComments[task.id] || [];
+                  const author     = taskAuthorDisplay(task);
+                  const toggling   = togglingTask[task.id];
                   const timeWindow = getTimeWindow(task);
+                  const isNextUp   = task.id === nextUpTaskId;
 
                   return (
                     <div
                       key={task.id}
                       className={`rounded-xl border bg-white hover:shadow-sm transition-all ${
-                        timeState === "overdue" ? "border-red-200 bg-red-50/30" :
-                        timeState === "active"  ? "border-green-200" :
-                        timeState === "grace"   ? "border-orange-200" :
+                        timeState === "overdue"  ? "border-red-200 bg-red-50/30" :
+                        timeState === "active"   ? "border-green-200 ring-2 ring-green-100" :
+                        timeState === "grace"    ? "border-orange-200" :
+                        isNextUp                 ? "border-blue-400 ring-2 ring-blue-100 shadow-md" :
                         "border-gray-200"
                       }`}
                     >
@@ -637,7 +645,13 @@ export function BoardDetail() {
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-1">
+                            {isNextUp && (
+                              <div className="inline-flex items-center gap-1 mb-1 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse inline-block" />
+                                Next up
+                              </div>
+                            )}
+                          <div className="flex items-start justify-between gap-1">
                               <h3 className="font-medium text-gray-900 text-sm leading-snug">{task.title}</h3>
                               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
                                 <button onClick={() => handleDuplicateTask(task)} title="Duplicate" className="p-1 text-gray-400 hover:text-indigo-600">
@@ -653,11 +667,12 @@ export function BoardDetail() {
                             </div>
 
                             {/* Time window */}
-                            <div className={`text-xs font-mono mt-0.5 flex items-center gap-1 ${
-                              timeState === "active"   ? "text-green-600 font-semibold" :
+                            <div className={`text-xs font-mono font-bold mt-0.5 flex items-center gap-1 ${
+                              timeState === "active"   ? "text-green-600" :
                               timeState === "grace"    ? "text-orange-500" :
                               timeState === "overdue"  ? "text-red-500" :
-                              "text-gray-400"
+                              isNextUp                 ? "text-blue-600" :
+                              "text-gray-500"
                             }`}>
                               <Clock className="w-3 h-3 flex-shrink-0" />
                               {timeWindow}
@@ -808,7 +823,7 @@ export function BoardDetail() {
                         >
                           {task.title} <ExternalLink className="w-3 h-3 opacity-50" />
                         </Link>
-                        <div className="text-xs text-green-600 font-mono mt-0.5 flex items-center gap-1">
+                        <div className="text-xs text-green-600 font-mono font-bold mt-0.5 flex items-center gap-1">
                           <Clock className="w-3 h-3" /> {getTimeWindow(task)}
                         </div>
                         <div className="flex flex-wrap items-center gap-1.5 mt-1">
