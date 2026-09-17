@@ -19,7 +19,6 @@ import { BoardMemberManagement } from "./BoardMemberManagement";
 import {
   Plus,
   Users,
-  Calendar,
   CheckCircle2,
   Circle,
   Clock,
@@ -32,6 +31,10 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
+  Search,
+  TrendingUp,
+  AlertCircle,
+  BarChart2,
 } from "lucide-react";
 import {
   formatISO,
@@ -53,6 +56,7 @@ export function BoardDetail() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showMemberManagement, setShowMemberManagement] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Modal states
   const [taskModalOpen, setTaskModalOpen] = useState(false);
@@ -66,14 +70,13 @@ export function BoardDetail() {
   const [taskFormErrors, setTaskFormErrors] = useState<Record<string, string>>({});
   const [submittingTask, setSubmittingTask] = useState(false);
 
-  // Inline comment state for pending tasks
+  // Inline comment state
   const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
   const [taskComments, setTaskComments] = useState<Record<string, TaskComment[]>>({});
   const [commentTexts, setCommentTexts] = useState<Record<string, string>>({});
   const [loadingComments, setLoadingComments] = useState<Record<string, boolean>>({});
   const [submittingComment, setSubmittingComment] = useState<Record<string, boolean>>({});
 
-  // Re-render every minute for due alerts
   const [now, setNow] = useState(new Date());
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 60000);
@@ -101,17 +104,11 @@ export function BoardDetail() {
     }
   };
 
-  // ---- Inline comment helpers ----
+  // ---- Comment helpers ----
   const toggleComments = async (taskId: string) => {
     const isOpen = openComments[taskId];
-    if (isOpen) {
-      setOpenComments((prev) => ({ ...prev, [taskId]: false }));
-      return;
-    }
-
-    setOpenComments((prev) => ({ ...prev, [taskId]: true }));
-
-    if (!taskComments[taskId]) {
+    setOpenComments((prev) => ({ ...prev, [taskId]: !isOpen }));
+    if (!isOpen && !taskComments[taskId]) {
       setLoadingComments((prev) => ({ ...prev, [taskId]: true }));
       try {
         const data = await apiClient.getTaskComments(boardId!, taskId);
@@ -214,7 +211,7 @@ export function BoardDetail() {
         setTasks((prev) =>
           prev.map((t) => (t.id === editingTask.id ? { ...t, ...updatedTask } : t))
         );
-        showToast("success", "Task updated", "The task has been updated successfully.");
+        showToast("success", "Task updated", "");
       } else {
         const createData: CreateTaskRequest = {
           title: taskFormData.title.trim(),
@@ -224,7 +221,7 @@ export function BoardDetail() {
         };
         const newTask = await apiClient.createTask(boardId, createData) as Task;
         setTasks((prev) => [newTask, ...prev]);
-        showToast("success", "Task created", "The task has been created successfully.");
+        showToast("success", "Task created", "");
         await createNotification(
           "TASK_CREATED",
           "New task created",
@@ -245,22 +242,22 @@ export function BoardDetail() {
   const handleToggleTask = async (task: Task) => {
     if (!boardId) return;
     try {
-      await apiClient.toggleTask(boardId, task.id);
+      const updated = await apiClient.toggleTask(boardId, task.id) as Task;
       setTasks((prev) =>
-        prev.map((t) => (t.id === task.id ? { ...t, isDone: !t.isDone } : t))
+        prev.map((t) => (t.id === task.id ? { ...t, ...updated } : t))
       );
-      showToast("success", task.isDone ? "Task reopened" : "Task completed", "");
+      showToast("success", task.isDone ? "Task reopened" : "Task completed! 🎉", "");
     } catch (error: any) {
       showToast("error", "Failed to update task", error.message || "Please try again.");
     }
   };
 
   const handleDeleteTask = async (task: Task) => {
-    if (!window.confirm(`Are you sure you want to delete "${task.title}"?`)) return;
+    if (!window.confirm(`Delete "${task.title}"?`)) return;
     try {
       await apiClient.deleteTask(boardId!, task.id);
       setTasks((prev) => prev.filter((t) => t.id !== task.id));
-      showToast("success", "Task deleted", "The task has been deleted successfully.");
+      showToast("success", "Task deleted", "");
     } catch (error: any) {
       showToast("error", "Failed to delete task", error.message || "Please try again.");
     }
@@ -270,31 +267,50 @@ export function BoardDetail() {
     if (board) setBoard({ ...board, members: updatedMembers });
   };
 
-  const completedTasks = tasks.filter((t) => t.isDone);
-  const pendingTasks = tasks.filter((t) => !t.isDone);
+  // ---- Derived state ----
+  const allPending = tasks.filter((t) => !t.isDone);
+  const allCompleted = tasks.filter((t) => t.isDone);
+  const overdueTasks = allPending.filter((t) => isBefore(parseISO(t.endAt), now));
+
+  const filteredPending = allPending.filter((t) =>
+    t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (t.notes || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const filteredCompleted = allCompleted.filter((t) =>
+    t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (t.notes || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const completionPct = tasks.length === 0 ? 0 : Math.round((allCompleted.length / tasks.length) * 100);
 
   const getDueAlert = (endAt: string) => {
     const dueDate = parseISO(endAt);
     const diff = differenceInMinutes(dueDate, now);
-    if (isBefore(dueDate, now)) return { message: "Overdue", color: "text-red-600 font-semibold" };
-    if (diff <= 60) return { message: "Due soon (within 1h)", color: "text-orange-500 font-semibold" };
-    if (diff <= 1440) return { message: "Due today", color: "text-yellow-600 font-semibold" };
-    return { message: "On track", color: "text-green-600 font-semibold" };
+    if (isBefore(dueDate, now)) return { label: "Overdue", cls: "bg-red-100 text-red-700" };
+    if (diff <= 60) return { label: "Due < 1h", cls: "bg-orange-100 text-orange-700" };
+    if (diff <= 1440) return { label: "Due today", cls: "bg-yellow-100 text-yellow-700" };
+    return { label: "On track", cls: "bg-green-100 text-green-700" };
   };
 
   const ownerDisplay = () => {
-    if (!board) return "Unknown";
+    if (!board) return "—";
     if (board.ownerId === user?.id) return "You";
     const name = [board.ownerFirstName, board.ownerLastName].filter(Boolean).join(" ");
-    return name || "Unknown";
+    return name || "—";
   };
 
-  const commentCount = (taskId: string) => taskComments[taskId]?.length ?? null;
+  const taskAuthorDisplay = (task: Task) => {
+    const cb = (task as any).createdBy;
+    if (!cb) return null;
+    if (task.createdById === user?.id) return "You";
+    const name = [cb.firstName, cb.lastName].filter(Boolean).join(" ");
+    return name || cb.email?.split("@")[0] || null;
+  };
 
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
-        <span className="text-gray-600 text-lg">Loading board...</span>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
       </div>
     );
   }
@@ -311,33 +327,70 @@ export function BoardDetail() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between mb-8">
+      <div className="flex flex-col sm:flex-row justify-between mb-6">
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="sm" onClick={() => navigate("/boards")}>
             <ArrowLeft className="w-4 h-4 mr-1" /> Back
           </Button>
           <div>
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold">{board.name}</h1>
-              <p className="text-xs text-gray-500">
-                Owner:
-                <span className="text-sm text-green-700 font-medium ml-1">{ownerDisplay()}</span>
-              </p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl font-bold text-gray-900">{board.name}</h1>
+              <span className="text-xs text-gray-500">
+                Owner: <span className="font-medium text-green-700">{ownerDisplay()}</span>
+              </span>
             </div>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 mt-0.5">
               {tasks.length} tasks • {board.members?.length || 1} members
+              {overdueTasks.length > 0 && (
+                <span className="ml-2 text-red-600 font-medium">
+                  • {overdueTasks.length} overdue
+                </span>
+              )}
             </p>
           </div>
         </div>
         <div className="flex gap-3 mt-4 sm:mt-0">
-          <Button variant="outline" onClick={() => setShowMemberManagement(!showMemberManagement)}>
-            <Users className="w-4 h-4 mr-2" /> Manage Members
+          <Button variant="outline" size="sm" onClick={() => setShowMemberManagement(!showMemberManagement)}>
+            <Users className="w-4 h-4 mr-2" /> Members
           </Button>
-          <Button onClick={handleCreateTask}>
+          <Button size="sm" onClick={handleCreateTask}>
             <Plus className="w-4 h-4 mr-2" /> Add Task
           </Button>
         </div>
       </div>
+
+      {/* Stats bar */}
+      {tasks.length > 0 && (
+        <div className="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <StatCard icon={<BarChart2 className="w-5 h-5 text-blue-600" />} label="Total" value={tasks.length} color="blue" />
+          <StatCard icon={<Clock className="w-5 h-5 text-orange-600" />} label="Pending" value={allPending.length} color="orange" />
+          <StatCard icon={<CheckCircle2 className="w-5 h-5 text-green-600" />} label="Completed" value={allCompleted.length} color="green" />
+          <StatCard icon={<AlertCircle className="w-5 h-5 text-red-600" />} label="Overdue" value={overdueTasks.length} color="red" />
+        </div>
+      )}
+
+      {/* Progress bar */}
+      {tasks.length > 0 && (
+        <div className="mb-6">
+          <div className="flex justify-between text-sm text-gray-500 mb-1">
+            <span className="flex items-center gap-1">
+              <TrendingUp className="w-4 h-4" /> Progress
+            </span>
+            <span className="font-semibold text-gray-700">{completionPct}%</span>
+          </div>
+          <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${completionPct}%`,
+                background: completionPct === 100
+                  ? "linear-gradient(to right, #22c55e, #16a34a)"
+                  : "linear-gradient(to right, #3b82f6, #6366f1)",
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {showMemberManagement && (
         <div className="mb-8">
@@ -345,87 +398,109 @@ export function BoardDetail() {
         </div>
       )}
 
-      {/* Tasks */}
+      {/* Search */}
+      <div className="mb-5 relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search tasks…"
+          className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+      </div>
+
+      {/* Task columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Pending Tasks */}
+        {/* Pending */}
         <Card>
           <CardHeader>
-            <h2 className="text-xl font-semibold">
-              Pending Tasks
-              {pendingTasks.length > 0 && (
-                <span className="ml-2 text-sm font-normal text-gray-400">({pendingTasks.length})</span>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Pending
+                {allPending.length > 0 && (
+                  <span className="ml-2 text-sm font-normal text-gray-400">({filteredPending.length})</span>
+                )}
+              </h2>
+              {overdueTasks.length > 0 && (
+                <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                  {overdueTasks.length} overdue
+                </span>
               )}
-            </h2>
+            </div>
           </CardHeader>
           <CardContent>
-            {pendingTasks.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No pending tasks</p>
+            {filteredPending.length === 0 ? (
+              <p className="text-gray-400 text-center py-10 text-sm">
+                {searchQuery ? "No tasks match your search." : "No pending tasks — all done! 🎉"}
+              </p>
             ) : (
               <div className="space-y-3">
-                {pendingTasks.map((task) => {
+                {filteredPending.map((task) => {
                   const alert = getDueAlert(task.endAt);
-                  const isCommentsOpen = openComments[task.id];
+                  const isOpen = openComments[task.id];
                   const comments = taskComments[task.id] || [];
-                  const count = commentCount(task.id);
+                  const author = taskAuthorDisplay(task);
                   return (
                     <div
                       key={task.id}
-                      className="rounded-xl border border-gray-100 hover:border-gray-200 transition-colors"
+                      className="rounded-xl border border-gray-200 bg-white hover:border-blue-200 hover:shadow-sm transition-all"
                     >
                       <div className="p-4 group">
-                        <div className="flex items-start space-x-3">
+                        <div className="flex items-start gap-3">
+                          {/* Complete button — visible circle */}
                           <button
                             onClick={() => handleToggleTask(task)}
-                            className="mt-0.5 text-gray-300 hover:text-green-500"
-                          >
-                            <Circle className="w-5 h-5" />
-                          </button>
-                          <div className="flex-1">
-                            <div className="flex justify-between">
-                              <div>
-                                <h3 className="font-medium text-gray-900">{task.title}</h3>
+                            title="Mark complete"
+                            className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full border-2 border-gray-400 hover:border-green-500 hover:bg-green-50 transition-all"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <h3 className="font-medium text-gray-900 leading-snug">{task.title}</h3>
                                 {task.notes && (
-                                  <p className="text-sm text-gray-600 mt-1">{task.notes}</p>
+                                  <p className="text-sm text-gray-500 mt-1 line-clamp-2">{task.notes}</p>
                                 )}
-                                <div className="flex flex-wrap items-center text-xs text-gray-500 mt-2 gap-3">
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="w-3.5 h-3.5" />
-                                    {format(parseISO(task.endAt), "MMM d, yyyy, h:mm a")}
-                                  </span>
-                                  <span className={alert.color}>{alert.message}</span>
-                                </div>
                               </div>
-                              <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition">
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
                                 <button
                                   onClick={() => handleEditTask(task)}
-                                  className="p-1 text-gray-400 hover:text-blue-600"
+                                  className="p-1 text-gray-400 hover:text-blue-600 rounded"
                                 >
-                                  <Edit className="w-4 h-4" />
+                                  <Edit className="w-3.5 h-3.5" />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteTask(task)}
-                                  className="p-1 text-gray-400 hover:text-red-600"
+                                  className="p-1 text-gray-400 hover:text-red-600 rounded"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             </div>
 
-                            {/* Comment toggle button */}
+                            <div className="flex flex-wrap items-center gap-2 mt-2">
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${alert.cls}`}>
+                                {alert.label}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                Due {format(parseISO(task.endAt), "MMM d, h:mm a")}
+                              </span>
+                              {author && (
+                                <span className="text-xs text-gray-400">
+                                  by <span className="text-gray-600 font-medium">{author}</span>
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Comments toggle */}
                             <button
                               onClick={() => toggleComments(task.id)}
                               className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-blue-600 transition"
                             >
                               <MessageSquare className="w-3.5 h-3.5" />
-                              {isCommentsOpen ? (
-                                <>
-                                  Hide comments <ChevronUp className="w-3 h-3" />
-                                </>
+                              {isOpen ? (
+                                <><span>Hide comments</span> <ChevronUp className="w-3 h-3" /></>
                               ) : (
-                                <>
-                                  Comments{count !== null ? ` (${count})` : ""}{" "}
-                                  <ChevronDown className="w-3 h-3" />
-                                </>
+                                <><span>Comments{comments.length > 0 ? ` (${comments.length})` : ""}</span> <ChevronDown className="w-3 h-3" /></>
                               )}
                             </button>
                           </div>
@@ -433,64 +508,53 @@ export function BoardDetail() {
                       </div>
 
                       {/* Inline comment panel */}
-                      {isCommentsOpen && (
+                      {isOpen && (
                         <div className="border-t border-gray-100 px-4 pb-4 pt-3 bg-gray-50 rounded-b-xl">
                           {loadingComments[task.id] ? (
-                            <p className="text-xs text-gray-400 py-2">Loading comments…</p>
+                            <p className="text-xs text-gray-400 py-2">Loading…</p>
                           ) : comments.length === 0 ? (
-                            <p className="text-xs text-gray-400 py-2">No comments yet.</p>
+                            <p className="text-xs text-gray-400 pb-2">No comments yet.</p>
                           ) : (
                             <div className="space-y-2 mb-3">
                               {comments.map((c) => (
-                                <div key={c.id} className="flex items-start gap-2 group/comment">
-                                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-xs font-semibold flex-shrink-0">
+                                <div key={c.id} className="flex items-start gap-2 group/cmt">
+                                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-xs font-bold flex-shrink-0">
                                     {(c.firstName?.[0] ?? c.email?.[0] ?? "?").toUpperCase()}
                                   </div>
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs font-medium text-gray-700">
-                                        {c.authorId === user?.id
-                                          ? "You"
-                                          : `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim() || c.email?.split("@")[0]}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-xs font-semibold text-gray-700">
+                                        {c.authorId === user?.id ? "You" : `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim() || c.email?.split("@")[0]}
                                       </span>
-                                      <span className="text-xs text-gray-400">
-                                        {format(parseISO(c.createdAt), "MMM d, h:mm a")}
-                                      </span>
+                                      <span className="text-xs text-gray-400">{format(parseISO(c.createdAt), "MMM d, h:mm a")}</span>
                                       {c.authorId === user?.id && (
                                         <button
                                           onClick={() => handleInlineDeleteComment(task.id, c.id)}
-                                          className="opacity-0 group-hover/comment:opacity-100 text-gray-300 hover:text-red-500 transition"
+                                          className="opacity-0 group-hover/cmt:opacity-100 text-gray-300 hover:text-red-500 transition"
                                         >
                                           <Trash2 className="w-3 h-3" />
                                         </button>
                                       )}
                                     </div>
-                                    <p className="text-xs text-gray-600 leading-relaxed">{c.content}</p>
+                                    <p className="text-xs text-gray-600 leading-relaxed mt-0.5">{c.content}</p>
                                   </div>
                                 </div>
                               ))}
                             </div>
                           )}
-
-                          {/* Add comment input */}
-                          <div className="flex gap-2 items-end mt-1">
+                          <div className="flex gap-2 items-end">
                             <textarea
                               value={commentTexts[task.id] || ""}
-                              onChange={(e) =>
-                                setCommentTexts((prev) => ({ ...prev, [task.id]: e.target.value }))
-                              }
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" && (e.ctrlKey || e.metaKey))
-                                  handleInlineAddComment(task.id);
-                              }}
-                              placeholder="Add a comment… (Ctrl+Enter)"
+                              onChange={(e) => setCommentTexts((prev) => ({ ...prev, [task.id]: e.target.value }))}
+                              onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleInlineAddComment(task.id); }}
+                              placeholder="Add comment… (Ctrl+Enter)"
                               rows={2}
-                              className="flex-1 text-xs rounded-lg border border-gray-300 px-2 py-1.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
+                              className="flex-1 text-xs rounded-lg border border-gray-300 px-2 py-1.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none bg-white"
                             />
                             <button
                               onClick={() => handleInlineAddComment(task.id)}
                               disabled={!commentTexts[task.id]?.trim() || submittingComment[task.id]}
-                              className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                              className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 transition"
                             >
                               <Send className="w-3.5 h-3.5" />
                             </button>
@@ -505,66 +569,78 @@ export function BoardDetail() {
           </CardContent>
         </Card>
 
-        {/* Completed Tasks */}
+        {/* Completed */}
         <Card>
           <CardHeader>
-            <h2 className="text-xl font-semibold">
-              Completed Tasks
-              {completedTasks.length > 0 && (
-                <span className="ml-2 text-sm font-normal text-gray-400">({completedTasks.length})</span>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Completed
+              {allCompleted.length > 0 && (
+                <span className="ml-2 text-sm font-normal text-gray-400">({filteredCompleted.length})</span>
               )}
             </h2>
           </CardHeader>
           <CardContent>
-            {completedTasks.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No completed tasks</p>
+            {filteredCompleted.length === 0 ? (
+              <p className="text-gray-400 text-center py-10 text-sm">
+                {searchQuery ? "No tasks match your search." : "No completed tasks yet — keep going!"}
+              </p>
             ) : (
               <div className="space-y-3">
-                {completedTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="p-4 rounded-xl border border-gray-100 bg-green-50 group flex items-start space-x-3 relative"
-                  >
-                    <Award className="w-6 h-6 text-green-600 mt-1 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <Link
-                        to={`/boards/${boardId}/tasks/${task.id}`}
-                        className="font-medium text-green-700 hover:text-green-900 hover:underline flex items-center gap-1"
-                      >
-                        {task.title}
-                        <ExternalLink className="w-3 h-3 opacity-60" />
-                      </Link>
-                      {task.notes && (
-                        <p className="text-sm text-gray-600 mt-1 truncate">{task.notes}</p>
-                      )}
-                      <p className="text-xs text-gray-500 mt-2">
-                        Completed: {format(parseISO(task.updatedAt), "MMM d, yyyy h:mm a")}
-                      </p>
-                      <Link
-                        to={`/boards/${boardId}/tasks/${task.id}`}
-                        className="mt-1 inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700"
-                      >
-                        <MessageSquare className="w-3 h-3" /> View comments &amp; notes
-                      </Link>
+                {filteredCompleted.map((task) => {
+                  const author = taskAuthorDisplay(task);
+                  return (
+                    <div
+                      key={task.id}
+                      className="p-4 rounded-xl border border-green-100 bg-green-50 group flex items-start gap-3"
+                    >
+                      <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <Link
+                          to={`/boards/${boardId}/tasks/${task.id}`}
+                          className="font-medium text-green-800 hover:text-green-600 hover:underline inline-flex items-center gap-1"
+                        >
+                          {task.title}
+                          <ExternalLink className="w-3 h-3 opacity-60" />
+                        </Link>
+                        {task.notes && (
+                          <p className="text-xs text-gray-500 mt-1 line-clamp-1">{task.notes}</p>
+                        )}
+                        <div className="flex flex-wrap items-center gap-3 mt-1">
+                          <p className="text-xs text-gray-500">
+                            Completed {format(parseISO(task.updatedAt), "MMM d, yyyy")}
+                          </p>
+                          {author && (
+                            <span className="text-xs text-gray-400">
+                              by <span className="font-medium text-gray-600">{author}</span>
+                            </span>
+                          )}
+                        </div>
+                        <Link
+                          to={`/boards/${boardId}/tasks/${task.id}`}
+                          className="mt-1 inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700"
+                        >
+                          <MessageSquare className="w-3 h-3" /> View notes &amp; comments
+                        </Link>
+                      </div>
+                      <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition">
+                        <button
+                          onClick={() => handleToggleTask(task)}
+                          title="Reopen task"
+                          className="p-1 text-gray-400 hover:text-orange-500"
+                        >
+                          <Circle className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTask(task)}
+                          title="Delete"
+                          className="p-1 text-gray-400 hover:text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition">
-                      <button
-                        onClick={() => handleToggleTask(task)}
-                        className="p-1 text-gray-400 hover:text-orange-500"
-                        title="Reopen task"
-                      >
-                        <Circle className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteTask(task)}
-                        className="p-1 text-gray-400 hover:text-red-600"
-                        title="Delete task"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -578,23 +654,23 @@ export function BoardDetail() {
         title={editingTask ? "Edit Task" : "Create New Task"}
         size="lg"
       >
-        <form onSubmit={handleTaskSubmit} className="space-y-6">
+        <form onSubmit={handleTaskSubmit} className="space-y-5">
           <Input
             label="Task title"
             value={taskFormData.title}
             onChange={(e) => setTaskFormData((prev) => ({ ...prev, title: e.target.value }))}
             error={taskFormErrors.title}
-            placeholder="Enter task title..."
+            placeholder="What needs to be done?"
             required
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700">Notes (optional)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
             <textarea
               value={taskFormData.notes}
               onChange={(e) => setTaskFormData((prev) => ({ ...prev, notes: e.target.value }))}
-              className="w-full rounded-xl border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               rows={3}
-              placeholder="Add additional notes..."
+              placeholder="Add context, links, or details…"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -615,12 +691,8 @@ export function BoardDetail() {
               required
             />
           </div>
-          <div className="flex justify-end space-x-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => { setTaskModalOpen(false); setEditingTask(null); }}
-            >
+          <div className="flex justify-end gap-3 pt-1">
+            <Button type="button" variant="outline" onClick={() => { setTaskModalOpen(false); setEditingTask(null); }}>
               Cancel
             </Button>
             <Button type="submit" loading={submittingTask}>
@@ -629,6 +701,33 @@ export function BoardDetail() {
           </div>
         </form>
       </Modal>
+    </div>
+  );
+}
+
+// ---- Small stat card ----
+function StatCard({
+  icon, label, value, color,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  color: "blue" | "orange" | "green" | "red";
+}) {
+  const bg = {
+    blue: "bg-blue-50 border-blue-100",
+    orange: "bg-orange-50 border-orange-100",
+    green: "bg-green-50 border-green-100",
+    red: "bg-red-50 border-red-100",
+  }[color];
+
+  return (
+    <div className={`rounded-xl border p-3 flex items-center gap-3 ${bg}`}>
+      {icon}
+      <div>
+        <p className="text-xs text-gray-500">{label}</p>
+        <p className="text-xl font-bold text-gray-800">{value}</p>
+      </div>
     </div>
   );
 }
