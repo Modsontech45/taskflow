@@ -17,7 +17,7 @@ import {
   Plus, Users, CheckCircle2, Circle, Clock, Edit, Trash2,
   ArrowLeft, MessageSquare, Send, ChevronDown, ChevronUp,
   ExternalLink, Search, TrendingUp, AlertCircle, BarChart2, Mic,
-  MicOff, Activity, Copy, RefreshCw, Loader2, Ban,
+  MicOff, Activity, Copy, RefreshCw, Loader2,
 } from "lucide-react";
 import {
   addDays, format, parseISO, isBefore, differenceInMinutes, addMinutes,
@@ -616,32 +616,9 @@ export function BoardDetail() {
                       <div className="p-3 group">
                         <div className="flex items-start gap-2.5">
 
-                          {/* Complete button column */}
-                          <div className="flex flex-col items-center gap-1 pt-0.5 flex-shrink-0">
-                            {timeState === "upcoming" ? (
-                              <div
-                                className="w-5 h-5 rounded-full border-2 border-gray-200 bg-gray-50"
-                                title={`Starts at ${format(parseISO(task.startAt), "H:mm")}`}
-                              />
-                            ) : timeState === "overdue" ? (
-                              <Ban className="w-5 h-5 text-red-400" title="Time window passed — negotiate below" />
-                            ) : (
-                              <button
-                                onClick={() => handleToggleTask(task)}
-                                disabled={toggling}
-                                title={timeState === "grace" ? "Complete (late — within grace period)" : "Mark complete"}
-                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                                  toggling
-                                    ? "border-gray-300 cursor-not-allowed"
-                                    : timeState === "grace"
-                                    ? "border-orange-400 hover:bg-orange-50 hover:border-orange-500"
-                                    : "border-gray-400 hover:border-green-500 hover:bg-green-50"
-                                }`}
-                              >
-                                {toggling && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
-                              </button>
-                            )}
-                            <div className={`w-1.5 h-1.5 rounded-full ${priority.dot}`} title={priority.label} />
+                          {/* Priority dot */}
+                          <div className="pt-1.5 flex-shrink-0">
+                            <div className={`w-2 h-2 rounded-full ${priority.dot}`} title={priority.label} />
                           </div>
 
                           <div className="flex-1 min-w-0">
@@ -713,7 +690,26 @@ export function BoardDetail() {
                             </div>
 
                             {/* Bottom actions */}
-                            <div className="mt-1.5 flex items-center gap-3">
+                            <div className="mt-2 flex items-center gap-2 flex-wrap">
+                              {(timeState === "active" || timeState === "grace") && (
+                                <button
+                                  onClick={() => handleToggleTask(task)}
+                                  disabled={toggling}
+                                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                    toggling
+                                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                      : timeState === "grace"
+                                      ? "bg-orange-500 hover:bg-orange-600 text-white shadow-sm"
+                                      : "bg-green-500 hover:bg-green-600 text-white shadow-sm"
+                                  }`}
+                                >
+                                  {toggling
+                                    ? <><Loader2 className="w-3 h-3 animate-spin" /> Saving…</>
+                                    : timeState === "grace"
+                                    ? <><CheckCircle2 className="w-3 h-3" /> Complete (late)</>
+                                    : <><CheckCircle2 className="w-3 h-3" /> Mark Complete</>}
+                                </button>
+                              )}
                               <button
                                 onClick={() => toggleComments(task.id)}
                                 className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-600 transition"
