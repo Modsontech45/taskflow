@@ -185,6 +185,10 @@ export class ApiClient {
     return this.request(API_ENDPOINTS.TASK_DETAIL(boardId, taskId), { method: "DELETE" });
   }
 
+  async duplicateTask(boardId: string, taskId: string) {
+    return this.request(API_ENDPOINTS.TASK_DUPLICATE(boardId, taskId), { method: "POST" });
+  }
+
   // ------------------- Notifications -------------------
   async getNotifications() {
     return this.request(API_ENDPOINTS.NOTIFICATIONS);

@@ -5,7 +5,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useNotifications } from "../../contexts/NotificationContext";
 import { useToast } from "../ui/Toast";
 import {
-  Board, Task, TaskComment, TaskPriority,
+  Board, Task, TaskComment, TaskPriority, TaskRecurring,
   CreateTaskRequest, UpdateTaskRequest,
 } from "../../types/board";
 import { Card, CardContent, CardHeader } from "../ui/Card";
@@ -17,7 +17,7 @@ import {
   Plus, Users, CheckCircle2, Circle, Clock, Edit, Trash2,
   ArrowLeft, Award, MessageSquare, Send, ChevronDown, ChevronUp,
   ExternalLink, Search, TrendingUp, AlertCircle, BarChart2, Mic,
-  MicOff, Activity,
+  MicOff, Activity, Copy, RefreshCw,
 } from "lucide-react";
 import {
   formatISO, addDays, format, parseISO, isBefore, differenceInMinutes,
@@ -50,8 +50,8 @@ export function BoardDetail() {
   // Modal
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [taskFormData, setTaskFormData] = useState<CreateTaskRequest & { priority: TaskPriority; assigneeId: string }>({
-    title: "", notes: "", startAt: "", endAt: "", priority: "MEDIUM", assigneeId: "",
+  const [taskFormData, setTaskFormData] = useState<CreateTaskRequest & { priority: TaskPriority; assigneeId: string; recurringType: TaskRecurring }>({
+    title: "", notes: "", startAt: "", endAt: "", priority: "MEDIUM", assigneeId: "", recurringType: "NONE",
   });
   const [taskFormErrors, setTaskFormErrors] = useState<Record<string, string>>({});
   const [submittingTask, setSubmittingTask] = useState(false);
@@ -154,7 +154,7 @@ export function BoardDetail() {
       title: "", notes: "",
       startAt: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
       endAt: format(addDays(new Date(), 1), "yyyy-MM-dd'T'HH:mm"),
-      priority: "MEDIUM", assigneeId: "",
+      priority: "MEDIUM", assigneeId: "", recurringType: "NONE",
     });
     setTaskFormErrors({});
     setTaskModalOpen(true);
@@ -169,6 +169,7 @@ export function BoardDetail() {
       endAt: format(parseISO(task.endAt), "yyyy-MM-dd'T'HH:mm"),
       priority: task.priority || "MEDIUM",
       assigneeId: task.assigneeId || "",
+      recurringType: task.recurringType || "NONE",
     });
     setTaskFormErrors({});
     setTaskModalOpen(true);
@@ -201,6 +202,7 @@ export function BoardDetail() {
         endAt: endAtISO,
         priority: taskFormData.priority,
         assigneeId: taskFormData.assigneeId || null,
+        recurringType: taskFormData.recurringType || "NONE",
       };
 
       if (editingTask) {
@@ -225,11 +227,31 @@ export function BoardDetail() {
 
   const handleToggleTask = async (task: Task) => {
     try {
-      const updated = await apiClient.toggleTask(boardId!, task.id) as Task;
-      setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, ...updated } : t));
-      if (!task.isDone) showToast("success", "Task completed! 🎉", "");
+      const result = await apiClient.toggleTask(boardId!, task.id) as { task: Task; nextTask: Task | null };
+      setTasks((prev) => {
+        const mapped = prev.map((t) => t.id === task.id ? { ...t, ...result.task } : t);
+        return result.nextTask ? [result.nextTask, ...mapped] : mapped;
+      });
+      if (!task.isDone) {
+        if (result.nextTask) {
+          const label = task.recurringType === "DAILY" ? "daily" : task.recurringType === "WEEKLY" ? "weekly" : "monthly";
+          showToast("success", `Task completed! 🎉 🔄 Next ${label} occurrence created for ${format(parseISO(result.nextTask.endAt), "MMM d")}`, "");
+        } else {
+          showToast("success", "Task completed! 🎉", "");
+        }
+      }
     } catch (error: any) {
       showToast("error", "Failed to update task", error.message);
+    }
+  };
+
+  const handleDuplicateTask = async (task: Task) => {
+    try {
+      const duped = await apiClient.duplicateTask(boardId!, task.id) as Task;
+      setTasks((prev) => [duped, ...prev]);
+      showToast("success", "Task duplicated", `"${duped.title}" added`);
+    } catch (error: any) {
+      showToast("error", "Failed to duplicate task", error.message);
     }
   };
 
@@ -507,6 +529,9 @@ export function BoardDetail() {
                             <div className="flex items-start justify-between gap-1">
                               <h3 className="font-medium text-gray-900 text-sm leading-snug">{task.title}</h3>
                               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                                <button onClick={() => handleDuplicateTask(task)} title="Duplicate task" className="p-1 text-gray-400 hover:text-indigo-600">
+                                  <Copy className="w-3 h-3" />
+                                </button>
                                 <button onClick={() => handleEditTask(task)} className="p-1 text-gray-400 hover:text-blue-600">
                                   <Edit className="w-3 h-3" />
                                 </button>
@@ -532,6 +557,12 @@ export function BoardDetail() {
                               <span className="text-xs text-gray-400">
                                 {format(parseISO(task.endAt), "MMM d, h:mm a")}
                               </span>
+                              {task.recurringType && task.recurringType !== "NONE" && (
+                                <span className="text-xs bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200 font-medium flex items-center gap-0.5">
+                                  <RefreshCw className="w-2.5 h-2.5" />
+                                  {task.recurringType.charAt(0) + task.recurringType.slice(1).toLowerCase()}
+                                </span>
+                              )}
                               {task.assignee && (
                                 <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-medium">
                                   → {task.assignee.id === user?.id ? "You" : `${task.assignee.firstName} ${task.assignee.lastName}`.trim()}
@@ -731,6 +762,26 @@ export function BoardDetail() {
                   ))}
               </select>
             </div>
+          </div>
+
+          {/* Recurring */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Recurring</label>
+            <select
+              value={taskFormData.recurringType}
+              onChange={(e) => setTaskFormData((p) => ({ ...p, recurringType: e.target.value as TaskRecurring }))}
+              className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="NONE">⬜ None (one-time)</option>
+              <option value="DAILY">🔄 Daily</option>
+              <option value="WEEKLY">📅 Weekly</option>
+              <option value="MONTHLY">🗓️ Monthly</option>
+            </select>
+            {taskFormData.recurringType !== "NONE" && (
+              <p className="text-xs text-indigo-600 mt-1">
+                When you complete this task, the next occurrence will be created automatically.
+              </p>
+            )}
           </div>
 
           <div>

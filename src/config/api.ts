@@ -56,6 +56,8 @@ BOARD_TASKS: (boardId: string) => `/boards/${boardId}/tasks`,
   CONVERSATION_MESSAGES: (convId: string) => `/messages/conversations/${convId}/messages`,
   // ...other endpoints
 
+  TASK_DUPLICATE: (boardId: string, taskId: string) => `/boards/${boardId}/tasks/${taskId}/duplicate`,
+
   // Task Comments
   TASK_COMMENTS: (boardId: string, taskId: string) => `/boards/${boardId}/tasks/${taskId}/comments`,
   TASK_COMMENT_DELETE: (boardId: string, taskId: string, commentId: string) => `/boards/${boardId}/tasks/${taskId}/comments/${commentId}`,

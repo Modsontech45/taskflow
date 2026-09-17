@@ -1,4 +1,5 @@
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+export type TaskRecurring = 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
 
 export interface Board {
   id: string;
@@ -34,6 +35,7 @@ export interface Task {
   status: 'pending' | 'expired';
   isDone: boolean;
   priority: TaskPriority;
+  recurringType?: TaskRecurring;
   assigneeId?: string | null;
   createdById: string;
   createdAt: string;
@@ -77,6 +79,7 @@ export interface CreateTaskRequest {
   endAt: string;
   priority?: TaskPriority;
   assigneeId?: string | null;
+  recurringType?: TaskRecurring;
 }
 
 export interface UpdateTaskRequest {
@@ -87,4 +90,5 @@ export interface UpdateTaskRequest {
   isDone?: boolean;
   priority?: TaskPriority;
   assigneeId?: string | null;
+  recurringType?: TaskRecurring;
 }
