@@ -25,6 +25,8 @@ export function BoardList() {
   const [loading, setLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
+  const [newBoardColor, setNewBoardColor] = useState("#3b82f6");
+  const [newBoardEmoji, setNewBoardEmoji] = useState("📋");
   const [creating, setCreating] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingBoard, setDeletingBoard] = useState<Board | null>(null);
@@ -72,9 +74,11 @@ export function BoardList() {
     try {
       const newBoard = await apiClient.createBoard({
         name: newBoardName.trim(),
+        color: newBoardColor,
+        emoji: newBoardEmoji,
       });
-      setBoards((prev) => [newBoard, ...prev]);
-      setNewBoardName("");
+      setBoards((prev) => [newBoard as Board, ...prev]);
+      setNewBoardName(""); setNewBoardColor("#3b82f6"); setNewBoardEmoji("📋");
       setCreateModalOpen(false);
       showToast(
         "success",
@@ -202,44 +206,37 @@ export function BoardList() {
               board.tasks?.filter((t) => !t.isDone && t.status === "pending")
                 .length || 0;
             return (
-              <Card key={board.id} hover className="group">
-                <CardContent className="p-6">
+              <Card key={board.id} hover className="group overflow-hidden">
+                {/* Color accent bar */}
+                <div className="h-1.5 rounded-t-2xl" style={{ backgroundColor: board.color || "#3b82f6" }} />
+                <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <Link
-                        to={`/boards/${board.id}`}
-                        className="block hover:text-blue-600 transition-colors"
+                    <div className="flex items-start gap-3 flex-1">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-sm flex-shrink-0 mt-0.5"
+                        style={{ backgroundColor: board.color || "#3b82f6" }}
                       >
-                        <div className="flex items-center space-x-2">
-                          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600">
+                        {board.emoji || "📋"}
+                      </div>
+                      <div className="flex-1">
+                        <Link to={`/boards/${board.id}`} className="block hover:text-blue-600 transition-colors">
+                          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 leading-tight">
                             {board.name}
                           </h3>
-
-                          <span className="flex items-center text-sm text-gray-500 space-x-1">
-                            <Crown className="w-4 h-4 text-yellow-500" />
-                            <span>
-                              {board.ownerId === user?.id
-                                ? "You"
-                                : board.ownerFirstName
-                                ? `${board.ownerFirstName} ${board.ownerLastName ?? ""}`.trim()
-                                : "Unknown"}{" "}
-                              (Owner)
-                            </span>
-                          </span>
-                        </div>
-                      </Link>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Created {new Date(board.createdAt).toLocaleDateString()}
-                      </p>
+                        </Link>
+                        <span className="flex items-center text-xs text-gray-500 mt-0.5 gap-1">
+                          <Crown className="w-3 h-3 text-yellow-500" />
+                          {board.ownerId === user?.id ? "You" : `${board.ownerFirstName ?? ""} ${board.ownerLastName ?? ""}`.trim() || "—"} (Owner)
+                        </span>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          Created {new Date(board.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
-                        onClick={() => {
-                          setDeletingBoard(board);
-                          setDeleteModalOpen(true);
-                        }}
+                        onClick={() => { setDeletingBoard(board); setDeleteModalOpen(true); }}
                         className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-50 transition-colors"
-                        title="Delete board"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -286,24 +283,57 @@ export function BoardList() {
         }}
         title="Create New Board"
       >
-        <form onSubmit={handleCreateBoard} className="space-y-6">
+        <form onSubmit={handleCreateBoard} className="space-y-5">
           <Input
             label="Board name"
             value={newBoardName}
             onChange={(e) => setNewBoardName(e.target.value)}
-            placeholder="Enter board name..."
+            placeholder="e.g. Q4 Goals, Daily Habits…"
             required
             autoFocus
           />
-          <div className="flex justify-end space-x-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setCreateModalOpen(false);
-                setNewBoardName("");
-              }}
-            >
+
+          {/* Emoji picker */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Pick an emoji</label>
+            <div className="flex flex-wrap gap-2">
+              {["📋","🚀","💡","🎯","📚","🏋️","💼","🌟","🔥","🎨","🏠","⚡"].map((em) => (
+                <button
+                  key={em} type="button"
+                  onClick={() => setNewBoardEmoji(em)}
+                  className={`w-9 h-9 rounded-lg text-lg flex items-center justify-center border-2 transition-all ${
+                    newBoardEmoji === em ? "border-blue-500 bg-blue-50" : "border-transparent hover:border-gray-300"
+                  }`}
+                >{em}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Color picker */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Board color</label>
+            <div className="flex gap-2 flex-wrap">
+              {["#3b82f6","#8b5cf6","#ec4899","#f97316","#22c55e","#06b6d4","#f59e0b","#64748b"].map((c) => (
+                <button
+                  key={c} type="button"
+                  onClick={() => setNewBoardColor(c)}
+                  className={`w-8 h-8 rounded-lg transition-all ${newBoardColor === c ? "ring-2 ring-offset-2 ring-gray-500 scale-110" : ""}`}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Preview */}
+          <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ backgroundColor: newBoardColor }}>
+              {newBoardEmoji}
+            </div>
+            <span className="font-medium text-gray-700">{newBoardName || "Board name"}</span>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" onClick={() => { setCreateModalOpen(false); setNewBoardName(""); }}>
               Cancel
             </Button>
             <Button type="submit" loading={creating}>

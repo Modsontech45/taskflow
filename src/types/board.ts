@@ -1,9 +1,13 @@
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+
 export interface Board {
   id: string;
   name: string;
   ownerId: string;
   ownerFirstName?: string;
   ownerLastName?: string;
+  color?: string;
+  emoji?: string;
   createdAt: string;
   updatedAt: string;
   members?: BoardMember[];
@@ -11,16 +15,13 @@ export interface Board {
   activeTasks?: number;
 }
 
-
-export interface  BoardMember {
+export interface BoardMember {
   userId: string;
   role: 'OWNER' | 'EDITOR' | 'VIEWER';
   id: string;
   firstName: string;
   lastName: string;
   email: string;
-  user?: {
-  };
 }
 
 export interface Task {
@@ -30,15 +31,25 @@ export interface Task {
   notes?: string;
   startAt: string;
   endAt: string;
-  status: 'pending' | 'expired';  // <--- Add this
+  status: 'pending' | 'expired';
   isDone: boolean;
+  priority: TaskPriority;
+  assigneeId?: string | null;
   createdById: string;
   createdAt: string;
   updatedAt: string;
   createdBy?: {
+    id: string;
     firstName: string;
     lastName: string;
+    email: string;
   };
+  assignee?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  } | null;
 }
 
 export interface TaskComment {
@@ -55,6 +66,8 @@ export interface TaskComment {
 
 export interface CreateBoardRequest {
   name: string;
+  color?: string;
+  emoji?: string;
 }
 
 export interface CreateTaskRequest {
@@ -62,6 +75,8 @@ export interface CreateTaskRequest {
   notes?: string;
   startAt: string;
   endAt: string;
+  priority?: TaskPriority;
+  assigneeId?: string | null;
 }
 
 export interface UpdateTaskRequest {
@@ -70,4 +85,6 @@ export interface UpdateTaskRequest {
   startAt?: string;
   endAt?: string;
   isDone?: boolean;
+  priority?: TaskPriority;
+  assigneeId?: string | null;
 }
