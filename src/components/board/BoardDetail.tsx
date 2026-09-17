@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { apiClient } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
@@ -17,7 +17,7 @@ import {
   Plus, Users, CheckCircle2, Circle, Clock, Edit, Trash2,
   ArrowLeft, MessageSquare, Send, ChevronDown, ChevronUp,
   ExternalLink, Search, TrendingUp, AlertCircle, BarChart2, Mic,
-  MicOff, Activity, Copy, RefreshCw, Loader2,
+  MicOff, Activity, Copy, RefreshCw, Loader2, Camera, ImageIcon,
 } from "lucide-react";
 import {
   addDays, format, parseISO, isBefore, differenceInMinutes, addMinutes,
@@ -66,6 +66,8 @@ export function BoardDetail() {
   const [commentTexts, setCommentTexts]         = useState<Record<string, string>>({});
   const [loadingComments, setLoadingComments]   = useState<Record<string, boolean>>({});
   const [submittingComment, setSubmittingComment] = useState<Record<string, boolean>>({});
+  const [uploadingImage, setUploadingImage]     = useState<Record<string, boolean>>({});
+  const imageInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Date filter
   type DateFilter = "today" | "week" | "custom" | "all";
@@ -157,6 +159,28 @@ export function BoardDetail() {
       setTaskComments((prev) => ({ ...prev, [taskId]: (prev[taskId] || []).filter((c) => c.id !== commentId) }));
     } catch (err: any) {
       showToast("error", "Failed to delete comment", err.message);
+    }
+  };
+
+  const handleImageUpload = async (taskId: string, file: File) => {
+    if (!file) return;
+    setUploadingImage((p) => ({ ...p, [taskId]: true }));
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("upload_preset", "taskflow_comments");
+      const res = await fetch("https://api.cloudinary.com/v1_1/n0doqvto/image/upload", { method: "POST", body: fd });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      const url: string = data.secure_url;
+      // Post image as a comment (image URL wrapped in [img] marker)
+      const added = await apiClient.addTaskComment(boardId!, taskId, `[img]${url}`);
+      setTaskComments((prev) => ({ ...prev, [taskId]: [...(prev[taskId] || []), added as TaskComment] }));
+      showToast("success", "Image uploaded", "");
+    } catch (err: any) {
+      showToast("error", "Image upload failed", err.message);
+    } finally {
+      setUploadingImage((p) => ({ ...p, [taskId]: false }));
     }
   };
 
@@ -759,7 +783,17 @@ export function BoardDetail() {
                                         </button>
                                       )}
                                     </div>
-                                    <p className="text-xs text-gray-600 leading-relaxed">{c.content}</p>
+                                      {c.content.startsWith("[img]") ? (
+                                      <a href={c.content.slice(5)} target="_blank" rel="noopener noreferrer">
+                                        <img
+                                          src={c.content.slice(5)}
+                                          alt="attachment"
+                                          className="mt-1 max-w-[240px] max-h-[180px] rounded-lg border border-gray-200 object-cover cursor-pointer hover:opacity-90 transition"
+                                        />
+                                      </a>
+                                    ) : (
+                                      <p className="text-xs text-gray-600 leading-relaxed">{c.content}</p>
+                                    )}
                                   </div>
                                 </div>
                               ))}
@@ -774,6 +808,28 @@ export function BoardDetail() {
                               rows={2}
                               className="flex-1 text-xs rounded-lg border border-gray-200 px-2 py-1.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none bg-white"
                             />
+                            {/* Hidden file input */}
+                            <input
+                              ref={(el) => { imageInputRefs.current[task.id] = el; }}
+                              type="file"
+                              accept="image/jpeg,image/png,image/gif,image/webp"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleImageUpload(task.id, file);
+                                e.target.value = "";
+                              }}
+                            />
+                            <button
+                              title="Attach image"
+                              onClick={() => imageInputRefs.current[task.id]?.click()}
+                              disabled={uploadingImage[task.id]}
+                              className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-40 transition"
+                            >
+                              {uploadingImage[task.id]
+                                ? <Loader2 className="w-3 h-3 animate-spin" />
+                                : <Camera className="w-3 h-3" />}
+                            </button>
                             <button
                               onClick={() => handleInlineAddComment(task.id)}
                               disabled={!commentTexts[task.id]?.trim() || submittingComment[task.id]}
