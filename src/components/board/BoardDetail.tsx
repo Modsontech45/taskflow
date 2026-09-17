@@ -15,22 +15,25 @@ import { Input } from "../ui/Input";
 import { BoardMemberManagement } from "./BoardMemberManagement";
 import {
   Plus, Users, CheckCircle2, Circle, Clock, Edit, Trash2,
-  ArrowLeft, Award, MessageSquare, Send, ChevronDown, ChevronUp,
+  ArrowLeft, MessageSquare, Send, ChevronDown, ChevronUp,
   ExternalLink, Search, TrendingUp, AlertCircle, BarChart2, Mic,
-  MicOff, Activity, Copy, RefreshCw,
+  MicOff, Activity, Copy, RefreshCw, Loader2, Ban,
 } from "lucide-react";
 import {
-  formatISO, addDays, format, parseISO, isBefore, differenceInMinutes,
+  addDays, format, parseISO, isBefore, differenceInMinutes, addMinutes,
+  isAfter, startOfDay, endOfDay, startOfWeek, endOfWeek, isWithinInterval,
 } from "date-fns";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
 
 // ---- Priority config ----
 const PRIORITY_CFG: Record<TaskPriority, { label: string; cls: string; dot: string }> = {
-  URGENT: { label: "Urgent", cls: "bg-red-100 text-red-700 border-red-200", dot: "bg-red-500" },
+  URGENT: { label: "Urgent", cls: "bg-red-100 text-red-700 border-red-200",    dot: "bg-red-500"    },
   HIGH:   { label: "High",   cls: "bg-orange-100 text-orange-700 border-orange-200", dot: "bg-orange-500" },
-  MEDIUM: { label: "Medium", cls: "bg-blue-100 text-blue-700 border-blue-200", dot: "bg-blue-500" },
-  LOW:    { label: "Low",    cls: "bg-gray-100 text-gray-500 border-gray-200", dot: "bg-gray-400" },
+  MEDIUM: { label: "Medium", cls: "bg-blue-100 text-blue-700 border-blue-200", dot: "bg-blue-500"   },
+  LOW:    { label: "Low",    cls: "bg-gray-100 text-gray-500 border-gray-200", dot: "bg-gray-400"   },
 };
+
+type TaskTimeState = "upcoming" | "active" | "grace" | "overdue";
 
 export function BoardDetail() {
   const { boardId } = useParams<{ boardId: string }>();
@@ -40,8 +43,8 @@ export function BoardDetail() {
   const navigate = useNavigate();
   const voice = useVoiceInput();
 
-  const [board, setBoard] = useState<Board | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [board, setBoard]   = useState<Board | null>(null);
+  const [tasks, setTasks]   = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showMemberManagement, setShowMemberManagement] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,18 +57,25 @@ export function BoardDetail() {
     title: "", notes: "", startAt: "", endAt: "", priority: "MEDIUM", assigneeId: "", recurringType: "NONE",
   });
   const [taskFormErrors, setTaskFormErrors] = useState<Record<string, string>>({});
-  const [submittingTask, setSubmittingTask] = useState(false);
+  const [submittingTask, setSubmittingTask]   = useState(false);
+  const [togglingTask, setTogglingTask]       = useState<Record<string, boolean>>({});
 
   // Inline comments
-  const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
-  const [taskComments, setTaskComments] = useState<Record<string, TaskComment[]>>({});
-  const [commentTexts, setCommentTexts] = useState<Record<string, string>>({});
-  const [loadingComments, setLoadingComments] = useState<Record<string, boolean>>({});
+  const [openComments, setOpenComments]         = useState<Record<string, boolean>>({});
+  const [taskComments, setTaskComments]         = useState<Record<string, TaskComment[]>>({});
+  const [commentTexts, setCommentTexts]         = useState<Record<string, string>>({});
+  const [loadingComments, setLoadingComments]   = useState<Record<string, boolean>>({});
   const [submittingComment, setSubmittingComment] = useState<Record<string, boolean>>({});
+
+  // Date filter
+  type DateFilter = "today" | "week" | "custom" | "all";
+  const [dateFilter, setDateFilter] = useState<DateFilter>("today");
+  const [customFrom, setCustomFrom] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [customTo,   setCustomTo]   = useState(format(new Date(), "yyyy-MM-dd"));
 
   const [now, setNow] = useState(new Date());
   useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 60000);
+    const interval = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -91,8 +101,7 @@ export function BoardDetail() {
   // ---- Voice ----
   const handleVoice = () => {
     if (voice.state === "listening") { voice.stopListening(); return; }
-
-    handleCreateTask(); // open modal first
+    handleCreateTask();
     setTimeout(() => {
       voice.startListening((parsed, raw) => {
         setTaskFormData((prev) => ({
@@ -108,9 +117,13 @@ export function BoardDetail() {
   };
 
   // ---- Comments ----
-  const toggleComments = async (taskId: string) => {
-    setOpenComments((prev) => ({ ...prev, [taskId]: !prev[taskId] }));
-    if (!openComments[taskId] && !taskComments[taskId]) {
+  const toggleComments = async (taskId: string, prefill?: string) => {
+    const willOpen = !openComments[taskId];
+    setOpenComments((prev) => ({ ...prev, [taskId]: willOpen }));
+    if (prefill && willOpen) {
+      setCommentTexts((p) => ({ ...p, [taskId]: p[taskId] || prefill }));
+    }
+    if (willOpen && !taskComments[taskId]) {
       setLoadingComments((prev) => ({ ...prev, [taskId]: true }));
       try {
         const data = await apiClient.getTaskComments(boardId!, taskId);
@@ -166,7 +179,7 @@ export function BoardDetail() {
       title: task.title,
       notes: task.notes || "",
       startAt: format(parseISO(task.startAt), "yyyy-MM-dd'T'HH:mm"),
-      endAt: format(parseISO(task.endAt), "yyyy-MM-dd'T'HH:mm"),
+      endAt:   format(parseISO(task.endAt),   "yyyy-MM-dd'T'HH:mm"),
       priority: task.priority || "MEDIUM",
       assigneeId: task.assigneeId || "",
       recurringType: task.recurringType || "NONE",
@@ -179,7 +192,7 @@ export function BoardDetail() {
     const errors: Record<string, string> = {};
     if (!taskFormData.title.trim()) errors.title = "Title is required";
     if (!taskFormData.startAt) errors.startAt = "Start date is required";
-    if (!taskFormData.endAt) errors.endAt = "End date is required";
+    if (!taskFormData.endAt)   errors.endAt   = "End date is required";
     if (taskFormData.startAt && taskFormData.endAt &&
         new Date(taskFormData.startAt) >= new Date(taskFormData.endAt))
       errors.endAt = "End date must be after start date";
@@ -192,19 +205,15 @@ export function BoardDetail() {
     if (Object.keys(errors).length > 0) { setTaskFormErrors(errors); return; }
     setSubmittingTask(true);
     try {
-      const startAtISO = new Date(taskFormData.startAt).toISOString();
-      const endAtISO = new Date(taskFormData.endAt).toISOString();
-
       const payload = {
         title: taskFormData.title.trim(),
         notes: taskFormData.notes?.trim() || undefined,
-        startAt: startAtISO,
-        endAt: endAtISO,
+        startAt: new Date(taskFormData.startAt).toISOString(),
+        endAt:   new Date(taskFormData.endAt).toISOString(),
         priority: taskFormData.priority,
         assigneeId: taskFormData.assigneeId || null,
         recurringType: taskFormData.recurringType || "NONE",
       };
-
       if (editingTask) {
         const updated = await apiClient.updateTask(boardId!, editingTask.id, payload);
         setTasks((prev) => prev.map((t) => t.id === editingTask.id ? { ...t, ...updated } : t));
@@ -226,6 +235,7 @@ export function BoardDetail() {
   };
 
   const handleToggleTask = async (task: Task) => {
+    setTogglingTask((p) => ({ ...p, [task.id]: true }));
     try {
       const result = await apiClient.toggleTask(boardId!, task.id) as { task: Task; nextTask: Task | null };
       setTasks((prev) => {
@@ -235,13 +245,15 @@ export function BoardDetail() {
       if (!task.isDone) {
         if (result.nextTask) {
           const label = task.recurringType === "DAILY" ? "daily" : task.recurringType === "WEEKLY" ? "weekly" : "monthly";
-          showToast("success", `Task completed! 🎉 🔄 Next ${label} occurrence created for ${format(parseISO(result.nextTask.endAt), "MMM d")}`, "");
+          showToast("success", `🎉 Done! 🔄 Next ${label} occurrence created for ${format(parseISO(result.nextTask.endAt), "MMM d")}`, "");
         } else {
           showToast("success", "Task completed! 🎉", "");
         }
       }
     } catch (error: any) {
       showToast("error", "Failed to update task", error.message);
+    } finally {
+      setTogglingTask((p) => ({ ...p, [task.id]: false }));
     }
   };
 
@@ -269,11 +281,43 @@ export function BoardDetail() {
     if (board) setBoard({ ...board, members: updatedMembers });
   };
 
+  // ---- Time state ----
+  const getTaskTimeState = (task: Task): TaskTimeState => {
+    const start = parseISO(task.startAt);
+    const end   = parseISO(task.endAt);
+    if (isBefore(now, start)) return "upcoming";
+    if (isAfter(now, addMinutes(end, 30))) return "overdue";
+    if (isAfter(now, end)) return "grace";
+    return "active";
+  };
+
+  const getTimeWindow = (task: Task) => {
+    const start = parseISO(task.startAt);
+    const end   = parseISO(task.endAt);
+    const mins  = differenceInMinutes(end, start);
+    const dur   = mins >= 60
+      ? `${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ""}`
+      : `${mins}min`;
+    return `${format(start, "H:mm")} – ${format(end, "H:mm")} · ${dur}`;
+  };
+
+  // ---- Date filter ----
+  const matchesDateFilter = (task: Task) => {
+    const d = parseISO(task.startAt);
+    if (dateFilter === "all") return true;
+    if (dateFilter === "today") return isWithinInterval(d, { start: startOfDay(now), end: endOfDay(now) });
+    if (dateFilter === "week")  return isWithinInterval(d, { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) });
+    if (dateFilter === "custom" && customFrom && customTo)
+      return isWithinInterval(d, { start: startOfDay(parseISO(customFrom)), end: endOfDay(parseISO(customTo)) });
+    return true;
+  };
+
   // ---- Derived ----
-  const allPending = tasks.filter((t) => !t.isDone);
-  const allCompleted = tasks.filter((t) => t.isDone);
-  const overdueTasks = allPending.filter((t) => isBefore(parseISO(t.endAt), now));
-  const completionPct = tasks.length === 0 ? 0 : Math.round((allCompleted.length / tasks.length) * 100);
+  const dateTasks    = tasks.filter(matchesDateFilter);
+  const allPending   = dateTasks.filter((t) => !t.isDone);
+  const allCompleted = dateTasks.filter((t) => t.isDone);
+  const overdueTasks = allPending.filter((t) => isAfter(now, addMinutes(parseISO(t.endAt), 30)));
+  const completionPct = dateTasks.length === 0 ? 0 : Math.round((allCompleted.length / dateTasks.length) * 100);
 
   const filteredPending = allPending.filter((t) =>
     t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -283,14 +327,6 @@ export function BoardDetail() {
     t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (t.notes || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const getDueAlert = (endAt: string) => {
-    const diff = differenceInMinutes(parseISO(endAt), now);
-    if (isBefore(parseISO(endAt), now)) return { label: "Overdue", cls: "bg-red-100 text-red-700" };
-    if (diff <= 60) return { label: "Due < 1h", cls: "bg-orange-100 text-orange-700" };
-    if (diff <= 1440) return { label: "Due today", cls: "bg-yellow-100 text-yellow-700" };
-    return null;
-  };
 
   const ownerDisplay = () => {
     if (!board) return "—";
@@ -307,7 +343,6 @@ export function BoardDetail() {
 
   const boardMembers = board?.members || [];
 
-  // ---- Activity feed from existing data ----
   const recentActivity = [...tasks]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 8)
@@ -315,7 +350,6 @@ export function BoardDetail() {
       id: t.id,
       text: t.isDone ? `✅ Completed: ${t.title}` : `📝 Task: ${t.title}`,
       time: t.updatedAt,
-      isDone: t.isDone,
     }));
 
   if (loading) {
@@ -344,7 +378,6 @@ export function BoardDetail() {
             <ArrowLeft className="w-4 h-4 mr-1" /> Back
           </Button>
           <div className="flex items-center gap-3">
-            {/* Board emoji/color badge */}
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-sm"
               style={{ backgroundColor: board.color || "#3b82f6" }}
@@ -360,7 +393,9 @@ export function BoardDetail() {
               </div>
               <p className="text-sm text-gray-500">
                 {tasks.length} tasks • {board.members?.length || 1} members
-                {overdueTasks.length > 0 && <span className="text-red-600 font-medium ml-2">• {overdueTasks.length} overdue</span>}
+                {overdueTasks.length > 0 && (
+                  <span className="text-red-600 font-medium ml-2">• {overdueTasks.length} missed</span>
+                )}
               </p>
             </div>
           </div>
@@ -373,7 +408,6 @@ export function BoardDetail() {
           <Button variant="outline" size="sm" onClick={() => setShowMemberManagement(!showMemberManagement)}>
             <Users className="w-4 h-4 mr-1" /> Members
           </Button>
-          {/* Voice button */}
           {voice.isSupported && (
             <Button
               variant={voice.state === "listening" ? "danger" : "outline"}
@@ -381,11 +415,9 @@ export function BoardDetail() {
               onClick={handleVoice}
               title="Create task by speaking"
             >
-              {voice.state === "listening" ? (
-                <><MicOff className="w-4 h-4 mr-1 animate-pulse" /> Stop</>
-              ) : (
-                <><Mic className="w-4 h-4 mr-1" /> Voice</>
-              )}
+              {voice.state === "listening"
+                ? <><MicOff className="w-4 h-4 mr-1 animate-pulse" /> Stop</>
+                : <><Mic className="w-4 h-4 mr-1" /> Voice</>}
             </Button>
           )}
           <Button size="sm" onClick={handleCreateTask}>
@@ -398,20 +430,24 @@ export function BoardDetail() {
       {voice.state !== "idle" && (
         <div className={`mb-4 rounded-xl px-4 py-3 text-sm flex items-center gap-2 ${
           voice.state === "listening" ? "bg-red-50 border border-red-200 text-red-700" :
-          voice.state === "error" ? "bg-red-50 text-red-700" :
+          voice.state === "error"     ? "bg-red-50 text-red-700" :
           "bg-blue-50 border border-blue-200 text-blue-700"
         }`}>
           <Mic className="w-4 h-4 flex-shrink-0" />
-          {voice.state === "listening" && <span className="animate-pulse">Listening… speak your task now</span>}
+          {voice.state === "listening"  && <span className="animate-pulse">Listening… speak your task now</span>}
           {voice.state === "processing" && <span>Processing…</span>}
-          {voice.state === "error" && <span>{voice.error}</span>}
+          {voice.state === "error"      && <span>{voice.error}</span>}
         </div>
       )}
 
       {/* Activity feed */}
       {showActivity && (
         <Card className="mb-6">
-          <CardHeader><h3 className="font-semibold text-gray-800 flex items-center gap-2"><Activity className="w-4 h-4" /> Recent Activity</h3></CardHeader>
+          <CardHeader>
+            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+              <Activity className="w-4 h-4" /> Recent Activity
+            </h3>
+          </CardHeader>
           <CardContent>
             {recentActivity.length === 0 ? (
               <p className="text-sm text-gray-400 py-2">No activity yet.</p>
@@ -438,17 +474,17 @@ export function BoardDetail() {
       )}
 
       {/* Stats */}
-      {tasks.length > 0 && (
+      {dateTasks.length > 0 && (
         <div className="mb-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard icon={<BarChart2 className="w-4 h-4 text-blue-600" />} label="Total" value={tasks.length} color="blue" />
-          <StatCard icon={<Clock className="w-4 h-4 text-orange-500" />} label="Pending" value={allPending.length} color="orange" />
-          <StatCard icon={<CheckCircle2 className="w-4 h-4 text-green-600" />} label="Done" value={allCompleted.length} color="green" />
-          <StatCard icon={<AlertCircle className="w-4 h-4 text-red-500" />} label="Overdue" value={overdueTasks.length} color="red" />
+          <StatCard icon={<BarChart2 className="w-4 h-4 text-blue-600" />}    label="Total"   value={dateTasks.length}    color="blue"   />
+          <StatCard icon={<Clock className="w-4 h-4 text-orange-500" />}      label="Pending" value={allPending.length}   color="orange" />
+          <StatCard icon={<CheckCircle2 className="w-4 h-4 text-green-600" />} label="Done"   value={allCompleted.length} color="green"  />
+          <StatCard icon={<AlertCircle className="w-4 h-4 text-red-500" />}   label="Missed"  value={overdueTasks.length} color="red"    />
         </div>
       )}
 
       {/* Progress */}
-      {tasks.length > 0 && (
+      {dateTasks.length > 0 && (
         <div className="mb-5">
           <div className="flex justify-between text-sm text-gray-500 mb-1.5">
             <span className="flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5" /> Progress</span>
@@ -467,6 +503,47 @@ export function BoardDetail() {
           </div>
         </div>
       )}
+
+      {/* Date filter */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {(["today", "week", "all"] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setDateFilter(f)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+              dateFilter === f
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
+            }`}
+          >
+            {f === "today" ? `Today · ${format(now, "MMM d")}` : f === "week" ? "This Week" : "All Time"}
+          </button>
+        ))}
+        <button
+          onClick={() => setDateFilter("custom")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+            dateFilter === "custom"
+              ? "bg-blue-600 text-white border-blue-600"
+              : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
+          }`}
+        >
+          Custom Range
+        </button>
+        {dateFilter === "custom" && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)}
+              className="rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+            <span className="text-xs text-gray-400">to</span>
+            <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)}
+              className="rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+          </div>
+        )}
+        {dateFilter !== "all" && (
+          <span className="text-xs text-gray-400 ml-1">
+            {dateTasks.length} task{dateTasks.length !== 1 ? "s" : ""} in view
+          </span>
+        )}
+      </div>
 
       {/* Search */}
       <div className="mb-5 relative">
@@ -489,39 +566,73 @@ export function BoardDetail() {
                 Pending <span className="text-gray-400 font-normal text-sm">({filteredPending.length})</span>
               </h2>
               {overdueTasks.length > 0 && (
-                <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">{overdueTasks.length} overdue</span>
+                <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                  {overdueTasks.length} missed
+                </span>
               )}
             </div>
           </CardHeader>
           <CardContent>
             {filteredPending.length === 0 ? (
               <div className="text-center py-10">
-                <p className="text-gray-400 text-sm">{searchQuery ? "No matches." : "No pending tasks — all done! 🎉"}</p>
+                <p className="text-gray-400 text-sm">
+                  {searchQuery ? "No matches." : dateFilter === "today" ? "No pending tasks for today 🎉" : "No pending tasks in this range."}
+                </p>
                 {!searchQuery && (
                   <button onClick={handleCreateTask} className="mt-3 text-sm text-blue-600 hover:underline">
-                    + Add your first task
+                    + Add a task
                   </button>
                 )}
               </div>
             ) : (
               <div className="space-y-2">
                 {filteredPending.map((task) => {
-                  const alert = getDueAlert(task.endAt);
-                  const priority = PRIORITY_CFG[task.priority || "MEDIUM"];
-                  const isOpen = openComments[task.id];
-                  const comments = taskComments[task.id] || [];
-                  const author = taskAuthorDisplay(task);
+                  const timeState = getTaskTimeState(task);
+                  const priority  = PRIORITY_CFG[task.priority || "MEDIUM"];
+                  const isOpen    = openComments[task.id];
+                  const comments  = taskComments[task.id] || [];
+                  const author    = taskAuthorDisplay(task);
+                  const toggling  = togglingTask[task.id];
+                  const timeWindow = getTimeWindow(task);
+
                   return (
-                    <div key={task.id} className="rounded-xl border border-gray-200 bg-white hover:shadow-sm transition-all">
+                    <div
+                      key={task.id}
+                      className={`rounded-xl border bg-white hover:shadow-sm transition-all ${
+                        timeState === "overdue" ? "border-red-200 bg-red-50/30" :
+                        timeState === "active"  ? "border-green-200" :
+                        timeState === "grace"   ? "border-orange-200" :
+                        "border-gray-200"
+                      }`}
+                    >
                       <div className="p-3 group">
                         <div className="flex items-start gap-2.5">
-                          {/* Priority dot + complete button */}
-                          <div className="flex flex-col items-center gap-1 pt-0.5">
-                            <button
-                              onClick={() => handleToggleTask(task)}
-                              title="Mark complete"
-                              className="w-5 h-5 rounded-full border-2 border-gray-400 hover:border-green-500 hover:bg-green-50 transition-all flex-shrink-0"
-                            />
+
+                          {/* Complete button column */}
+                          <div className="flex flex-col items-center gap-1 pt-0.5 flex-shrink-0">
+                            {timeState === "upcoming" ? (
+                              <div
+                                className="w-5 h-5 rounded-full border-2 border-gray-200 bg-gray-50"
+                                title={`Starts at ${format(parseISO(task.startAt), "H:mm")}`}
+                              />
+                            ) : timeState === "overdue" ? (
+                              <Ban className="w-5 h-5 text-red-400" title="Time window passed — negotiate below" />
+                            ) : (
+                              <button
+                                onClick={() => handleToggleTask(task)}
+                                disabled={toggling}
+                                title={timeState === "grace" ? "Complete (late — within grace period)" : "Mark complete"}
+                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                                  toggling
+                                    ? "border-gray-300 cursor-not-allowed"
+                                    : timeState === "grace"
+                                    ? "border-orange-400 hover:bg-orange-50 hover:border-orange-500"
+                                    : "border-gray-400 hover:border-green-500 hover:bg-green-50"
+                                }`}
+                              >
+                                {toggling && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
+                              </button>
+                            )}
                             <div className={`w-1.5 h-1.5 rounded-full ${priority.dot}`} title={priority.label} />
                           </div>
 
@@ -529,7 +640,7 @@ export function BoardDetail() {
                             <div className="flex items-start justify-between gap-1">
                               <h3 className="font-medium text-gray-900 text-sm leading-snug">{task.title}</h3>
                               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
-                                <button onClick={() => handleDuplicateTask(task)} title="Duplicate task" className="p-1 text-gray-400 hover:text-indigo-600">
+                                <button onClick={() => handleDuplicateTask(task)} title="Duplicate" className="p-1 text-gray-400 hover:text-indigo-600">
                                   <Copy className="w-3 h-3" />
                                 </button>
                                 <button onClick={() => handleEditTask(task)} className="p-1 text-gray-400 hover:text-blue-600">
@@ -541,6 +652,29 @@ export function BoardDetail() {
                               </div>
                             </div>
 
+                            {/* Time window */}
+                            <div className={`text-xs font-mono mt-0.5 flex items-center gap-1 ${
+                              timeState === "active"   ? "text-green-600 font-semibold" :
+                              timeState === "grace"    ? "text-orange-500" :
+                              timeState === "overdue"  ? "text-red-500" :
+                              "text-gray-400"
+                            }`}>
+                              <Clock className="w-3 h-3 flex-shrink-0" />
+                              {timeWindow}
+                              {timeState === "upcoming" && (
+                                <span className="ml-1 text-gray-400 font-normal font-sans">upcoming</span>
+                              )}
+                              {timeState === "active" && (
+                                <span className="ml-1 text-green-600 font-normal font-sans animate-pulse">● now</span>
+                              )}
+                              {timeState === "grace" && (
+                                <span className="ml-1 text-orange-500 font-normal font-sans">late — {differenceInMinutes(now, parseISO(task.endAt))}m over</span>
+                              )}
+                              {timeState === "overdue" && (
+                                <span className="ml-1 font-normal font-sans">missed</span>
+                              )}
+                            </div>
+
                             {task.notes && (
                               <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{task.notes}</p>
                             )}
@@ -548,14 +682,6 @@ export function BoardDetail() {
                             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                               <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${priority.cls}`}>
                                 {priority.label}
-                              </span>
-                              {alert && (
-                                <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${alert.cls}`}>
-                                  {alert.label}
-                                </span>
-                              )}
-                              <span className="text-xs text-gray-400">
-                                {format(parseISO(task.endAt), "MMM d, h:mm a")}
                               </span>
                               {task.recurringType && task.recurringType !== "NONE" && (
                                 <span className="text-xs bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200 font-medium flex items-center gap-0.5">
@@ -568,18 +694,29 @@ export function BoardDetail() {
                                   → {task.assignee.id === user?.id ? "You" : `${task.assignee.firstName} ${task.assignee.lastName}`.trim()}
                                 </span>
                               )}
-                              {author && (
-                                <span className="text-xs text-gray-400">by {author}</span>
-                              )}
+                              {author && <span className="text-xs text-gray-400">by {author}</span>}
                             </div>
 
-                            <button
-                              onClick={() => toggleComments(task.id)}
-                              className="mt-1.5 flex items-center gap-1 text-xs text-gray-400 hover:text-blue-600 transition"
-                            >
-                              <MessageSquare className="w-3 h-3" />
-                              {isOpen ? <><span>Hide</span><ChevronUp className="w-3 h-3" /></> : <><span>Comments{comments.length > 0 ? ` (${comments.length})` : ""}</span><ChevronDown className="w-3 h-3" /></>}
-                            </button>
+                            {/* Bottom actions */}
+                            <div className="mt-1.5 flex items-center gap-3">
+                              <button
+                                onClick={() => toggleComments(task.id)}
+                                className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-600 transition"
+                              >
+                                <MessageSquare className="w-3 h-3" />
+                                {isOpen
+                                  ? <><span>Hide</span><ChevronUp className="w-3 h-3" /></>
+                                  : <><span>Comments{comments.length > 0 ? ` (${comments.length})` : ""}</span><ChevronDown className="w-3 h-3" /></>}
+                              </button>
+                              {timeState === "overdue" && (
+                                <button
+                                  onClick={() => toggleComments(task.id, "Missed this task because: ")}
+                                  className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-medium transition"
+                                >
+                                  <MessageSquare className="w-3 h-3" /> Negotiate
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -660,7 +797,7 @@ export function BoardDetail() {
               <div className="space-y-2">
                 {filteredCompleted.map((task) => {
                   const priority = PRIORITY_CFG[task.priority || "MEDIUM"];
-                  const author = taskAuthorDisplay(task);
+                  const author   = taskAuthorDisplay(task);
                   return (
                     <div key={task.id} className="p-3 rounded-xl border border-green-100 bg-green-50 group flex items-start gap-2.5">
                       <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
@@ -671,6 +808,9 @@ export function BoardDetail() {
                         >
                           {task.title} <ExternalLink className="w-3 h-3 opacity-50" />
                         </Link>
+                        <div className="text-xs text-green-600 font-mono mt-0.5 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {getTimeWindow(task)}
+                        </div>
                         <div className="flex flex-wrap items-center gap-1.5 mt-1">
                           <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${priority.cls}`}>
                             {priority.label}
@@ -710,7 +850,6 @@ export function BoardDetail() {
         size="lg"
       >
         <form onSubmit={handleTaskSubmit} className="space-y-4">
-          {/* Voice hint */}
           {voice.isSupported && !editingTask && (
             <div className="flex items-center gap-2 text-xs text-gray-500 bg-blue-50 rounded-xl px-3 py-2">
               <Mic className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
@@ -727,7 +866,6 @@ export function BoardDetail() {
             required
           />
 
-          {/* Priority + Assignee row */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
@@ -750,21 +888,14 @@ export function BoardDetail() {
                 className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               >
                 <option value="">Unassigned</option>
-                {user && (
-                  <option value={user.id}>You ({user.firstName})</option>
-                )}
-                {boardMembers
-                  .filter((m) => m.userId !== user?.id)
-                  .map((m) => (
-                    <option key={m.userId} value={m.userId}>
-                      {m.firstName} {m.lastName}
-                    </option>
-                  ))}
+                {user && <option value={user.id}>You ({user.firstName})</option>}
+                {boardMembers.filter((m) => m.userId !== user?.id).map((m) => (
+                  <option key={m.userId} value={m.userId}>{m.firstName} {m.lastName}</option>
+                ))}
               </select>
             </div>
           </div>
 
-          {/* Recurring */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Recurring</label>
             <select
@@ -779,7 +910,7 @@ export function BoardDetail() {
             </select>
             {taskFormData.recurringType !== "NONE" && (
               <p className="text-xs text-indigo-600 mt-1">
-                When you complete this task, the next occurrence will be created automatically.
+                Completing this task will auto-create the next occurrence.
               </p>
             )}
           </div>
